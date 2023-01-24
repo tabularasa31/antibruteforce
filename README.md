@@ -1,4 +1,4 @@
-[![CI](https://github.com/tabularasa31/antibruteforce/actions/workflows/github-actions-demo.yml/badge.svg)](https://github.com/tabularasa31/antibruteforce/actions/workflows/github-actions-demo.yml)
+[![CI](https://github.com/tabularasa31/antibruteforce/actions/workflows/main.yml/badge.svg)](https://github.com/tabularasa31/antibruteforce/actions/workflows/main.yml)
 
 
 # antibruteforce

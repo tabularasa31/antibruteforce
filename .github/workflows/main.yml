@@ -17,6 +17,7 @@ jobs:
           ls ${{ github.workspace }}
       - run: echo "🍏 This job's status is ${{ job.status }}."
       - name: Codecov
-      - uses: codecov/codecov-action@v3.1.1
+        uses: codecov/codecov-action@v3.1.1
+
         
 

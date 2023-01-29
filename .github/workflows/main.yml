@@ -31,8 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.ref, 'antibruteforce') }}
     steps:
-      - name: Extract branch name
-        run: echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+#      - name: Extract branch name
+#        run: echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Set up Go
         uses: actions/setup-go@v3
@@ -46,7 +46,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.41.1
-          working-directory: ${{ env.BRANCH }}
+#          working-directory: ${{ env.BRANCH }}
 
         
 

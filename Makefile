@@ -9,6 +9,8 @@ build:
 test:
 	go test -cover ./...
 
+generate:
+	 go generate ./...
 
 # ==============================================================================
 # Tools commands

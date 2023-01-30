@@ -15,7 +15,7 @@ linters:
     - depguard
     - dogsled
     - dupl
-#    - durationcheck --"Running error: no such linter durationcheck
+    - durationcheck
     - errorlint
     - exhaustive
     - exportloopref

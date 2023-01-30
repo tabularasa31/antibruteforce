@@ -4,28 +4,28 @@
 # не более K = 1000 попыток в минуту для данного IP (число большое, т.к. NAT).
 
 app:
-  Mode: Development
-  MaxLogin: 10
-  MaxPass: 100
-  MaxIP: 1000
+  mode: Development
+  maxLogin: 10
+  maxPass: 100
+  maxIp: 1000
 
 server:
-  Port: :5000
-  PprofPort: :5555
-  Mode: Development
-  JwtSecretKey: secretkey
-  CookieName: jwt-token
-  ReadTimeout: 5
-  WriteTimeout: 5
-  SSL: true
-  CtxDefaultTimeout: 12
-  CSRF: true
-  Debug: false
-  MaxConnectionIdle: 5
-  Timeout: 15
-  MaxConnectionAge: 5
-  Time: 120
+  port: :5000
+  pprofPort: :5555
+  mode: Development
+  jwtSecretKey: secretkey
+  cookieName: jwt-token
+  readTimeout: 5
+  writeTimeout: 5
+  ssl: true
+  ctxDefaultTimeout: 12
+  csrf: true
+  debug: false
+  maxConnectionIdle: 5
+  timeout: 15
+  maxConnectionAge: 5
+  time: 120
 
 logger:
-  Development: true
-  Level: info
+  development: true
+  level: info

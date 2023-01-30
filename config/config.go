@@ -16,37 +16,37 @@ type (
 	}
 
 	AppConfig struct {
-		Mode     string `yaml:"Mode"`
-		MaxLogin int    `yaml:"MaxLogin"`
-		MaxPass  int    `yaml:"MaxPass"`
-		MaxIp    int    `yaml:"MaxIP"`
+		Mode     string `yaml:"mode"`
+		MaxLogin int    `yaml:"maxLogin"`
+		MaxPass  int    `yaml:"maxPass"`
+		MaxIP    int    `yaml:"maxIp"`
 	}
 
 	ServerConfig struct {
-		Port              string        `yaml:"Port"`
-		PprofPort         string        `yaml:"PprofPort"`
-		Mode              string        `yaml:"Mode"`
-		JwtSecretKey      string        `yaml:"JwtSecretKey"`
-		CookieName        string        `yaml:"CookieName"`
-		ReadTimeout       time.Duration `yaml:"ReadTimeout"`
-		WriteTimeout      time.Duration `yaml:"WriteTimeout"`
-		SSL               bool          `yaml:"SSL"`
-		CtxDefaultTimeout time.Duration `yaml:"CtxDefaultTimeout"`
-		CSRF              bool          `yaml:"CSRF"`
-		Debug             bool          `yaml:"Debug"`
-		MaxConnectionIdle time.Duration `yaml:"MaxConnectionIdle"`
-		Timeout           time.Duration `yaml:"Timeout"`
-		MaxConnectionAge  time.Duration `yaml:"MaxConnectionAge"`
-		Time              time.Duration `yaml:"Time"`
+		Port              string        `yaml:"port"`
+		PprofPort         string        `yaml:"pprofPort"`
+		Mode              string        `yaml:"mode"`
+		JwtSecretKey      string        `yaml:"jwtSecretKey"`
+		CookieName        string        `yaml:"cookieName"`
+		ReadTimeout       time.Duration `yaml:"readTimeout"`
+		WriteTimeout      time.Duration `yaml:"writeTimeout"`
+		SSL               bool          `yaml:"ssl"`
+		CtxDefaultTimeout time.Duration `yaml:"ctxDefaultTimeout"`
+		CSRF              bool          `yaml:"csrf"`
+		Debug             bool          `yaml:"debug"`
+		MaxConnectionIdle time.Duration `yaml:"maxConnectionIdle"`
+		Timeout           time.Duration `yaml:"timeout"`
+		MaxConnectionAge  time.Duration `yaml:"maxConnectionAge"`
+		Time              time.Duration `yaml:"time"`
 	}
 
 	LoggerConfig struct {
-		Development bool   `yaml:"Development"`
-		Level       string `yaml:"Level"`
+		Development bool   `yaml:"development"`
+		Level       string `yaml:"level"`
 	}
 )
 
-// Load config file from given path
+// Load config file from given path -.
 func LoadConfig(filename string) (*viper.Viper, error) {
 	v := viper.New()
 
@@ -54,7 +54,8 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 	v.AddConfigPath(".")
 	v.AutomaticEnv()
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var notFoundError *viper.ConfigFileNotFoundError
+		if errors.As(err, &notFoundError) {
 			return nil, errors.New("config file not found")
 		}
 		return nil, err
@@ -63,7 +64,7 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 	return v, nil
 }
 
-// Parse config file
+// Parse config file -.
 func ParseConfig(v *viper.Viper) (*Config, error) {
 	var c Config
 
@@ -76,7 +77,7 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 	return &c, nil
 }
 
-// Get config
+// Get config -.
 func GetConfig(configPath string) (*Config, error) {
 	cfgFile, err := LoadConfig(configPath)
 	if err != nil {

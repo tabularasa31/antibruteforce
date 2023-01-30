@@ -6,7 +6,7 @@ import (
 )
 
 func Run(cfg *config.Config) {
-	appLogger := logger.NewApiLogger(cfg)
+	appLogger := logger.NewAPILogger(cfg)
 	appLogger.InitLogger()
 	appLogger.Infof(
 		"LogLevel: %s, Mode: %s, SSL: %v",

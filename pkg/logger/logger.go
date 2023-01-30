@@ -1,9 +1,9 @@
 package logger
 
 import (
-	"github.com/tabularasa31/antibruteforce/config"
 	"os"
 
+	"github.com/tabularasa31/antibruteforce/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

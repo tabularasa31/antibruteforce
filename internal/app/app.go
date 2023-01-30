@@ -15,7 +15,5 @@ func Run(cfg *config.Config) {
 		cfg.Server.SSL,
 	)
 	appLogger.Infof("Success parsed config")
-
 	appLogger.Infof("Starting server")
-
 }

@@ -2,9 +2,10 @@ package config
 
 import (
 	"errors"
-	"github.com/spf13/viper"
 	"log"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type (
@@ -44,25 +45,6 @@ type (
 		Level       string `yaml:"Level"`
 	}
 )
-
-// NewConfig returns app config.
-//func NewConfig(file string) (*Config, error) {
-//	cfg := &Config{}
-//
-//	err := cleanenv.ReadConfig(file, cfg)
-//	if err != nil {
-//		return nil, fmt.Errorf("config error: %w", err)
-//	}
-//
-//	err = cleanenv.ReadEnv(cfg)
-//	if err != nil {
-//		return nil, fmt.Errorf("config error: %w", err)
-//	}
-//
-//	fmt.Println("----Config------- : ", cfg)
-//
-//	return cfg, nil
-//}
 
 // Load config file from given path
 func LoadConfig(filename string) (*viper.Viper, error) {

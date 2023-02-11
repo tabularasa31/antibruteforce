@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AntiBruteforceClient interface {
-	Query(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
+	AllowRequest(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 	ClearBucket(ctx context.Context, in *Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	AddToBlackList(ctx context.Context, in *Subnet, opts ...grpc.CallOption) (*Response, error)
 	AddToWhiteList(ctx context.Context, in *Subnet, opts ...grpc.CallOption) (*Response, error)
@@ -39,9 +39,9 @@ func NewAntiBruteforceClient(cc grpc.ClientConnInterface) AntiBruteforceClient {
 	return &antiBruteforceClient{cc}
 }
 
-func (c *antiBruteforceClient) Query(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+func (c *antiBruteforceClient) AllowRequest(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
 	out := new(Response)
-	err := c.cc.Invoke(ctx, "/service.AntiBruteforce/Query", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/service.AntiBruteforce/AllowRequest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (c *antiBruteforceClient) RemoveFromWhiteList(ctx context.Context, in *Subn
 // All implementations must embed UnimplementedAntiBruteforceServer
 // for forward compatibility
 type AntiBruteforceServer interface {
-	Query(context.Context, *Request) (*Response, error)
+	AllowRequest(context.Context, *Request) (*Response, error)
 	ClearBucket(context.Context, *Request) (*emptypb.Empty, error)
 	AddToBlackList(context.Context, *Subnet) (*Response, error)
 	AddToWhiteList(context.Context, *Subnet) (*Response, error)
@@ -110,8 +110,8 @@ type AntiBruteforceServer interface {
 type UnimplementedAntiBruteforceServer struct {
 }
 
-func (UnimplementedAntiBruteforceServer) Query(context.Context, *Request) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
+func (UnimplementedAntiBruteforceServer) AllowRequest(context.Context, *Request) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllowRequest not implemented")
 }
 func (UnimplementedAntiBruteforceServer) ClearBucket(context.Context, *Request) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClearBucket not implemented")
@@ -141,20 +141,20 @@ func RegisterAntiBruteforceServer(s grpc.ServiceRegistrar, srv AntiBruteforceSer
 	s.RegisterService(&AntiBruteforce_ServiceDesc, srv)
 }
 
-func _AntiBruteforce_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AntiBruteforce_AllowRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AntiBruteforceServer).Query(ctx, in)
+		return srv.(AntiBruteforceServer).AllowRequest(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.AntiBruteforce/Query",
+		FullMethod: "/service.AntiBruteforce/AllowRequest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AntiBruteforceServer).Query(ctx, req.(*Request))
+		return srv.(AntiBruteforceServer).AllowRequest(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -257,8 +257,8 @@ var AntiBruteforce_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AntiBruteforceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Query",
-			Handler:    _AntiBruteforce_Query_Handler,
+			MethodName: "AllowRequest",
+			Handler:    _AntiBruteforce_AllowRequest_Handler,
 		},
 		{
 			MethodName: "ClearBucket",

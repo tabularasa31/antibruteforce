@@ -21,7 +21,7 @@ message Subnet {
 }
 
 service AntiBruteforce{
-  rpc Query(Request) returns (Response);
+  rpc AllowRequest(Request) returns (Response);
   rpc ClearBucket(Request) returns(google.protobuf.Empty);
   rpc AddToBlackList(Subnet) returns(Response);
   rpc AddToWhiteList(Subnet) returns(Response);

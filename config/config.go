@@ -2,7 +2,7 @@ package config
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/spf13/viper"
@@ -13,13 +13,15 @@ type (
 		App    AppConfig
 		Server ServerConfig
 		Logger LoggerConfig
+		DB     string `yaml:"db"`
+		Redis  *Redis
 	}
 
 	AppConfig struct {
-		Mode     string `yaml:"mode"`
-		MaxLogin int    `yaml:"maxLogin"`
-		MaxPass  int    `yaml:"maxPass"`
-		MaxIP    int    `yaml:"maxIp"`
+		Mode       string `yaml:"mode"`
+		LoginLimit int    `yaml:"loginLimit"`
+		PassLimit  int    `yaml:"passLimit"`
+		IpLimit    int    `yaml:"ipLimit"`
 	}
 
 	ServerConfig struct {
@@ -44,14 +46,21 @@ type (
 		Development bool   `yaml:"development"`
 		Level       string `yaml:"level"`
 	}
+
+	Redis struct {
+		Host     string
+		Port     string
+		Password string
+	}
 )
 
-// Load config file from given path -.
+// LoadConfig Load config file from given path -.
 func LoadConfig(filename string) (*viper.Viper, error) {
 	v := viper.New()
 
 	v.SetConfigName(filename)
 	v.AddConfigPath(".")
+	v.SetEnvPrefix("app")
 	v.AutomaticEnv()
 	if err := v.ReadInConfig(); err != nil {
 		var notFoundError *viper.ConfigFileNotFoundError
@@ -64,20 +73,35 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 	return v, nil
 }
 
-// Parse config file -.
+// ParseConfig Parse config file -.
 func ParseConfig(v *viper.Viper) (*Config, error) {
 	var c Config
 
 	err := v.Unmarshal(&c)
 	if err != nil {
-		log.Printf("unable to decode into struct, %v", err)
-		return nil, err
+		return nil, fmt.Errorf("unable to decode into struct, %v", err)
 	}
+
+	c.Redis = &Redis{
+		Host:     v.GetString(envConfigRedisHost),
+		Port:     v.GetString(envConfigRedisPort),
+		Password: v.GetString(envConfigRedisPassword),
+	}
+
+	c.Redis.Host = v.GetString(envConfigRedisHost)
+	if c.Redis.Host == "" {
+		c.Redis.Host = "localhost"
+	}
+	c.Redis.Port = v.GetString(envConfigRedisPort)
+	if c.Redis.Port == "" {
+		c.Redis.Port = "6379"
+	}
+	c.Redis.Password = v.GetString(envConfigRedisPassword)
 
 	return &c, nil
 }
 
-// Get config -.
+// GetConfig Get config -.
 func GetConfig(configPath string) (*Config, error) {
 	cfgFile, err := LoadConfig(configPath)
 	if err != nil {

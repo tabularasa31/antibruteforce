@@ -4,13 +4,13 @@
 # не более K = 1000 попыток в минуту для данного IP (число большое, т.к. NAT).
 
 app:
-  mode: Development
-  maxLogin: 10
-  maxPass: 100
-  maxIp: 1000
+  mode: 'Development'
+  loginLimit: 10
+  passLimit: 100
+  ipLimit: 1000
 
 server:
-  port: :5000
+  port: :5001
   pprofPort: :5555
   mode: Development
   jwtSecretKey: secretkey
@@ -29,3 +29,6 @@ server:
 logger:
   development: true
   level: info
+
+db: 'list.db'
+

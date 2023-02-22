@@ -6,6 +6,8 @@ import (
 
 	"github.com/tabularasa31/antibruteforce/config"
 	"github.com/tabularasa31/antibruteforce/internal/app"
+
+	_ "github.com/lib/pq"
 )
 
 var configFile string

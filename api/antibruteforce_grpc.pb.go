@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -24,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AntiBruteforceClient interface {
 	AllowRequest(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
-	ClearBucket(ctx context.Context, in *Request, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ClearBucket(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 	AddToBlackList(ctx context.Context, in *Subnet, opts ...grpc.CallOption) (*Response, error)
 	AddToWhiteList(ctx context.Context, in *Subnet, opts ...grpc.CallOption) (*Response, error)
 	RemoveFromBlackList(ctx context.Context, in *Subnet, opts ...grpc.CallOption) (*Response, error)
@@ -48,8 +47,8 @@ func (c *antiBruteforceClient) AllowRequest(ctx context.Context, in *Request, op
 	return out, nil
 }
 
-func (c *antiBruteforceClient) ClearBucket(ctx context.Context, in *Request, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *antiBruteforceClient) ClearBucket(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
 	err := c.cc.Invoke(ctx, "/service.AntiBruteforce/ClearBucket", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -98,7 +97,7 @@ func (c *antiBruteforceClient) RemoveFromWhiteList(ctx context.Context, in *Subn
 // for forward compatibility
 type AntiBruteforceServer interface {
 	AllowRequest(context.Context, *Request) (*Response, error)
-	ClearBucket(context.Context, *Request) (*emptypb.Empty, error)
+	ClearBucket(context.Context, *Request) (*Response, error)
 	AddToBlackList(context.Context, *Subnet) (*Response, error)
 	AddToWhiteList(context.Context, *Subnet) (*Response, error)
 	RemoveFromBlackList(context.Context, *Subnet) (*Response, error)
@@ -113,7 +112,7 @@ type UnimplementedAntiBruteforceServer struct {
 func (UnimplementedAntiBruteforceServer) AllowRequest(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AllowRequest not implemented")
 }
-func (UnimplementedAntiBruteforceServer) ClearBucket(context.Context, *Request) (*emptypb.Empty, error) {
+func (UnimplementedAntiBruteforceServer) ClearBucket(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClearBucket not implemented")
 }
 func (UnimplementedAntiBruteforceServer) AddToBlackList(context.Context, *Subnet) (*Response, error) {

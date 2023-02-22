@@ -33,7 +33,6 @@
 package boltdb
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/boltdb/bolt"
@@ -43,7 +42,6 @@ var db *bolt.DB
 
 // Init opens a connection to the BoltDB database.
 func Init(dbPath string) error {
-	fmt.Println("---------trying to init boltdb")
 	var err error
 	db, err = bolt.Open(dbPath, 0600, nil)
 	if err != nil {
@@ -52,7 +50,7 @@ func Init(dbPath string) error {
 	return nil
 }
 
-// Close closes the connection to the BoltDB database.
+// Close the connection to the BoltDB database.
 func Close() {
 	err := db.Close()
 	if err != nil {

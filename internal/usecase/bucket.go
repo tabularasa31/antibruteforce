@@ -1,30 +1,22 @@
 package usecase
 
 import (
-	"github.com/tabularasa31/antibruteforce/internal/controller/repo"
+	"context"
 	"github.com/tabularasa31/antibruteforce/internal/models"
+	"net"
 )
 
-// BucketUseCase -.
-type BucketUseCase struct {
-	repo repo.BucketRepo
-}
-
-// New -.
-func New(r repo.BucketRepo) *BucketUseCase {
-	return &BucketUseCase{
-		repo: r,
+func (u *UseCases) AllowRequest(ctx context.Context, request models.Request) bool {
+	switch u.lists.SearchIPInList(ctx, net.IP(request.Ip)) {
+	case "white":
+		return true
+	case "black":
+		return false
+	default:
+		return u.buckets.Allow(request)
 	}
 }
 
-func (u *BucketUseCase) Check(q *models.Request) bool {
-	return false
+func (u *UseCases) ClearBucket(request models.Request) error {
+	return u.buckets.ClearBucket(request)
 }
-
-//
-//rpc Query(Request) returns (Response);
-//rpc ClearBucket(Request) returns(google.protobuf.Empty);
-//rpc AddToBlackList(Subnet) returns(Response);
-//rpc AddToWhiteList(Subnet) returns(Response);
-//rpc RemoveFromBlackList(Subnet) returns(Response);
-//rpc RemoveFromWhiteList(Subnet) returns(Response);

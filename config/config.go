@@ -10,11 +10,11 @@ import (
 
 type (
 	Config struct {
-		App    AppConfig
-		Server ServerConfig
-		Logger LoggerConfig
-		DB     string `yaml:"db"`
-		Redis  *Redis
+		App      AppConfig
+		Server   ServerConfig
+		Logger   LoggerConfig
+		Redis    *Redis
+		Postgres Postgres
 	}
 
 	AppConfig struct {
@@ -51,6 +51,11 @@ type (
 		Host     string
 		Port     string
 		Password string
+	}
+
+	Postgres struct {
+		Dsn     string `yaml:"dsn"`
+		PoolMax int    `yaml:"pool_max" env:"PG_POOL_MAX"`
 	}
 )
 

@@ -5,12 +5,12 @@
 
 app:
   mode: 'Development'
-  loginLimit: 10
-  passLimit: 100
-  ipLimit: 1000
+  loginLimit: 1
+  passLimit: 2
+  ipLimit: 3
 
 server:
-  port: :5001
+  port: :50051
   pprofPort: :5555
   mode: Development
   jwtSecretKey: secretkey
@@ -24,11 +24,17 @@ server:
   maxConnectionIdle: 5
   timeout: 15
   maxConnectionAge: 5
-  time: 120
+  time: 5
 
 logger:
   development: true
   level: info
 
-db: 'list.db'
+postgres:
+  dsn: 'postgres://postgres:passpass@localhost:5432/abfdb'
+  pool_max: 2
 
+
+#  dsn: 'postgres://abf:passpass@localhost:5432/abfdb'
+#
+#'pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass'

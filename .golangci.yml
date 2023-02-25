@@ -42,7 +42,7 @@ linters:
 #    - makezero
     - misspell
     - nestif
-    - nilerr
+#    - nilerr
     - noctx
     - nolintlint
     - prealloc

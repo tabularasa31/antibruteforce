@@ -34,7 +34,7 @@ func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (strin
 		return "", fmt.Errorf("repo - SaveToList - lr.Builder: %w", err)
 	}
 
-	_, err = lr.Pool.Exec(ctx, sql, args...)
+	_, err = lr.Postgres.Pool.Exec(ctx, sql, args...)
 	if err != nil {
 		return "", fmt.Errorf("repo - SaveToList - lr.Pool.Exec: %w", err)
 	}
@@ -53,7 +53,7 @@ func (lr *ListRepo) DeleteFromList(ctx context.Context, subnet, color string) er
 		return fmt.Errorf("there is no subnet %s in %slist", subnet, color)
 	}
 
-	_, err := lr.Pool.Exec(ctx, `delete from lists where subnet = $1`, subnet)
+	_, err := lr.Postgres.Pool.Exec(ctx, `delete from lists where subnet = $1`, subnet)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (lr *ListRepo) DeleteFromList(ctx context.Context, subnet, color string) er
 
 // CheckColor checks if a subnet exists in the specified list.
 func (lr *ListRepo) CheckColor(ctx context.Context, subnet string) (string, error) {
-	sql, args, err := lr.Builder.Select("list_type").
+	sql, args, err := lr.Postgres.Builder.Select("list_type").
 		From("lists").
 		Where("subnet=?", subnet).
 		ToSql()
@@ -70,7 +70,7 @@ func (lr *ListRepo) CheckColor(ctx context.Context, subnet string) (string, erro
 		return "", fmt.Errorf("repo - CheckColor - lr.Builder: %w", err)
 	}
 
-	row := lr.Pool.QueryRow(ctx, sql, args...)
+	row := lr.Postgres.Pool.QueryRow(ctx, sql, args...)
 	if err != nil {
 		return "", fmt.Errorf("repo - CheckColor - lr.Pool.QueryRow: %w", err)
 	}
@@ -130,7 +130,7 @@ func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (
 					fmt.Errorf("lists conflict: given subnet %v already include subnet %v in different %slist",
 						subnetA, row.subnetB, row.color)
 			}
-			_, er := lr.Pool.Exec(ctx, `delete from lists where subnet = $1`, row.subnetB)
+			_, er := lr.Postgres.Pool.Exec(ctx, `delete from lists where subnet = $1`, row.subnetB)
 			if er != nil {
 				return "", fmt.Errorf("AcontainingB - lr.Pool.Exec - delete: %w", er)
 			}

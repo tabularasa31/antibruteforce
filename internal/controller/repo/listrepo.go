@@ -25,7 +25,7 @@ func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (strin
 		return message, nil
 	}
 
-	sql, args, err := lr.Builder.
+	sql, args, err := lr.Postgres.Builder.
 		Insert("lists").
 		Columns("subnet, list_type").
 		Values(subnet, color).
@@ -43,7 +43,7 @@ func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (strin
 
 // DeleteFromList subnet from lists -.
 func (lr *ListRepo) DeleteFromList(ctx context.Context, subnet, color string) error {
-	row := lr.Pool.QueryRow(ctx,
+	row := lr.Postgres.Pool.QueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM lists WHERE subnet = $1 AND list_type = $2)`, subnet, color)
 	var found string
 	if err := row.Scan(&found); err != nil {
@@ -85,7 +85,7 @@ func (lr *ListRepo) CheckColor(ctx context.Context, subnet string) (string, erro
 
 // SearchIPInList check if it is a given IP in the lists, returns color.
 func (lr *ListRepo) SearchIPInList(ctx context.Context, ip net.IP) string {
-	row := lr.Pool.QueryRow(ctx, `SELECT EXISTS (SELECT list_type FROM lists WHERE subnet >>= $1)`, ip)
+	row := lr.Postgres.Pool.QueryRow(ctx, `SELECT EXISTS (SELECT list_type FROM lists WHERE subnet >>= $1)`, ip)
 	var found string
 	if err := row.Scan(&found); err != nil {
 		return ""
@@ -96,7 +96,7 @@ func (lr *ListRepo) SearchIPInList(ctx context.Context, ip net.IP) string {
 // iterateSubnets checks if IP address ranges overlap.
 // Returns message if there is an overlap conflict, empty string - if not.
 func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (string, error) {
-	rows, err := lr.Pool.Query(ctx, "SELECT subnet, list_type FROM lists")
+	rows, err := lr.Postgres.Pool.Query(ctx, "SELECT subnet, list_type FROM lists")
 	if err != nil {
 		return "", fmt.Errorf("lr.Pool.Query: %w", err)
 	}

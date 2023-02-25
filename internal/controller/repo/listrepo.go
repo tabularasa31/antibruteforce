@@ -3,9 +3,10 @@ package repo
 import (
 	"context"
 	"fmt"
+	"net"
+
 	"github.com/seancfoley/ipaddress-go/ipaddr"
 	"github.com/tabularasa31/antibruteforce/pkg/postgres"
-	"net"
 )
 
 // ListRepo -.
@@ -17,9 +18,7 @@ func NewListRepo(pg *postgres.Postgres) *ListRepo {
 	return &ListRepo{pg}
 }
 
-// SaveToList subnet into lists -.
 func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (string, error) {
-
 	if message, err := lr.iterateSubnets(ctx, subnet, color); err != nil {
 		return "", fmt.Errorf("repo - SaveToList - lr.iterateSubnets: %w", err)
 	} else if message != "" {
@@ -61,7 +60,7 @@ func (lr *ListRepo) DeleteFromList(ctx context.Context, subnet, color string) er
 	return nil
 }
 
-// CheckColor checks if a subnet exists in the specified list
+// CheckColor checks if a subnet exists in the specified list.
 func (lr *ListRepo) CheckColor(ctx context.Context, subnet string) (string, error) {
 	sql, args, err := lr.Builder.Select("list_type").
 		From("lists").
@@ -95,7 +94,7 @@ func (lr *ListRepo) SearchIPInList(ctx context.Context, ip net.IP) string {
 }
 
 // iterateSubnets checks if IP address ranges overlap.
-// Returns message if there is an overlap conflict, empty string - if not
+// Returns message if there is an overlap conflict, empty string - if not.
 func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (string, error) {
 	rows, err := lr.Pool.Query(ctx, "SELECT subnet, list_type FROM lists")
 	if err != nil {
@@ -115,16 +114,21 @@ func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (
 
 		row.subnetB = fmt.Sprintf("%v", temp)
 
-		if BcontainingA := ipaddr.NewIPAddressString(row.subnetB).GetAddress().
-			Contains(ipaddr.NewIPAddressString(subnetA).GetAddress()); BcontainingA == true {
+		if ipaddr.NewIPAddressString(row.subnetB).GetAddress().
+			Contains(ipaddr.NewIPAddressString(subnetA).GetAddress()) {
 			if row.color != color {
-				return "", fmt.Errorf("lists conflict: subnet %v in %slist already include given subnet %v", row.subnetB, row.color, subnetA)
+				return "",
+					fmt.Errorf("lists conflict: subnet %v in %slist already include given subnet %v",
+						row.subnetB, row.color, subnetA)
 			}
-			return fmt.Sprintf("subnet %v already in %slist because it is included in subnet %v", subnetA, color, row.subnetB), nil
-		} else if AcontainingB := ipaddr.NewIPAddressString(subnetA).GetAddress().
-			Contains(ipaddr.NewIPAddressString(row.subnetB).GetAddress()); AcontainingB == true {
+			return fmt.Sprintf("subnet %v already in %slist because it is included in subnet %v",
+				subnetA, color, row.subnetB), nil
+		} else if ipaddr.NewIPAddressString(subnetA).GetAddress().
+			Contains(ipaddr.NewIPAddressString(row.subnetB).GetAddress()) {
 			if row.color != color {
-				return "", fmt.Errorf("lists conflict: given subnet %v already include subnet %v in different %slist", subnetA, row.subnetB, row.color)
+				return "",
+					fmt.Errorf("lists conflict: given subnet %v already include subnet %v in different %slist",
+						subnetA, row.subnetB, row.color)
 			}
 			_, er := lr.Pool.Exec(ctx, `delete from lists where subnet = $1`, row.subnetB)
 			if er != nil {

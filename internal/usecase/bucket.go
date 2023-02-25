@@ -2,12 +2,13 @@ package usecase
 
 import (
 	"context"
-	"github.com/tabularasa31/antibruteforce/internal/models"
 	"net"
+
+	"github.com/tabularasa31/antibruteforce/internal/models"
 )
 
 func (u *UseCases) AllowRequest(ctx context.Context, request models.Request) bool {
-	switch u.lists.SearchIPInList(ctx, net.IP(request.Ip)) {
+	switch u.lists.SearchIPInList(ctx, net.IP(request.IP)) {
 	case "white":
 		return true
 	case "black":

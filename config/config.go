@@ -21,7 +21,7 @@ type (
 		Mode       string `yaml:"mode"`
 		LoginLimit int    `yaml:"loginLimit"`
 		PassLimit  int    `yaml:"passLimit"`
-		IpLimit    int    `yaml:"ipLimit"`
+		IPLimit    int    `yaml:"ipLimit"`
 	}
 
 	ServerConfig struct {
@@ -32,10 +32,6 @@ type (
 		SSL               bool          `yaml:"ssl"`
 		CtxDefaultTimeout time.Duration `yaml:"ctxDefaultTimeout"`
 		Debug             bool          `yaml:"debug"`
-		MaxConnectionIdle time.Duration `yaml:"maxConnectionIdle"`
-		Timeout           time.Duration `yaml:"timeout"`
-		MaxConnectionAge  time.Duration `yaml:"maxConnectionAge"`
-		Time              time.Duration `yaml:"time"`
 	}
 
 	LoggerConfig struct {
@@ -51,7 +47,7 @@ type (
 
 	Postgres struct {
 		Dsn     string `yaml:"dsn"`
-		PoolMax int    `yaml:"pool_max" env:"PG_POOL_MAX"`
+		PoolMax int    `yaml:"poolMax" env:"PG_POOL_MAX"`
 	}
 )
 
@@ -80,7 +76,7 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 
 	err := v.Unmarshal(&c)
 	if err != nil {
-		return nil, fmt.Errorf("unable to decode into struct, %v", err)
+		return nil, fmt.Errorf("unable to decode into struct, %w", err)
 	}
 
 	c.Redis.Host = v.GetString(envConfigRedisHost)

@@ -18,10 +18,6 @@ server:
   ssl: true
   ctxDefaultTimeout: 12
   debug: false
-  maxConnectionIdle: 5
-  timeout: 15
-  maxConnectionAge: 5
-  time: 5
 
 logger:
   development: true

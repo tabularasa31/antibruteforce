@@ -1,11 +1,12 @@
 package repo
 
 import (
+	"time"
+
 	"github.com/go-redis/redis"
 	"github.com/go-redis/redis_rate"
 	"github.com/tabularasa31/antibruteforce/config"
 	"github.com/tabularasa31/antibruteforce/internal/models"
-	"time"
 )
 
 // BucketRepo -.
@@ -29,13 +30,13 @@ func NewBucketRepo(r *redis.Client, cfg *config.AppConfig) *BucketRepo {
 }
 
 func (b *BucketRepo) CheckLimit(request models.Request) bool {
-	ip := request.Ip
+	ip := request.IP
 	login := request.Login
 	password := request.Pass
 
 	// Check if the rate limits have been exceeded for each key
-	if request.Ip != "" {
-		_, _, ipOK := b.ipLimiter.AllowMinute(ip, int64(b.cfg.IpLimit))
+	if request.IP != "" {
+		_, _, ipOK := b.ipLimiter.AllowMinute(ip, int64(b.cfg.IPLimit))
 		if !ipOK {
 			return false
 		}
@@ -57,8 +58,8 @@ func (b *BucketRepo) CheckLimit(request models.Request) bool {
 }
 
 func (b *BucketRepo) ClearBucket(request models.Request) error {
-	if errIp := b.ipLimiter.Reset(request.Ip, 1*time.Minute); errIp != nil {
-		return errIp
+	if errIP := b.ipLimiter.Reset(request.IP, 1*time.Minute); errIP != nil {
+		return errIP
 	}
 	if errLogin := b.loginLimiter.Reset(request.Login, 1*time.Minute); errLogin != nil {
 		return errLogin

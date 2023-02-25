@@ -25,5 +25,4 @@ func GetLogger(cfg *config.Config) (*zap.Logger, error) {
 	}
 
 	return l, nil
-
 }

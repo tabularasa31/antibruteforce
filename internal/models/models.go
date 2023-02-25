@@ -4,6 +4,6 @@ type (
 	Request struct {
 		Login string
 		Pass  string
-		Ip    string
+		IP    string
 	}
 )

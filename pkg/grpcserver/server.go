@@ -2,30 +2,34 @@ package grpcserver
 
 import (
 	"fmt"
+	"net"
+	"net/http"
+	"time"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
-
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	proto "github.com/tabularasa31/antibruteforce/api"
-	"github.com/tabularasa31/antibruteforce/config"
 	grpcv1 "github.com/tabularasa31/antibruteforce/internal/controller/grpc/v1"
 	"github.com/tabularasa31/antibruteforce/internal/usecase"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"time"
+)
+
+const (
+	_defaultMaxConnectionIdle = 5 * time.Minute
+	_defaultMaxConnectionAge  = 5 * time.Minute
+	_defaultTimeout           = 15 * time.Second
+	_defaultTime              = 5 * time.Minute
 )
 
 type Server struct {
 	Server   *grpc.Server
 	Listener net.Listener
-	useCases *usecase.UseCases
 	logg     *zap.Logger
-	cfg      *config.Config
 	notify   chan error
 }
 
@@ -34,14 +38,13 @@ func New(
 	useCases *usecase.UseCases,
 	lis net.Listener,
 	logg *zap.Logger,
-	cfg *config.Config) *Server {
-
+) *Server {
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
-			MaxConnectionIdle: cfg.Server.MaxConnectionIdle * time.Minute,
-			Timeout:           cfg.Server.Timeout * time.Second,
-			MaxConnectionAge:  cfg.Server.MaxConnectionAge * time.Minute,
-			Time:              cfg.Server.Time * time.Minute,
+			MaxConnectionIdle: _defaultMaxConnectionIdle,
+			Timeout:           _defaultTimeout,
+			MaxConnectionAge:  _defaultMaxConnectionAge,
+			Time:              _defaultTime,
 		}),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_zap.UnaryServerInterceptor(logg),
@@ -62,9 +65,15 @@ func New(
 	// start monitoring
 	grpc_prometheus.Register(grpcServer)
 	grpc_prometheus.EnableHandlingTimeHistogram()
-	logg.Info(fmt.Sprintf("Monitoring export listen %s", ":9091"))
+	logg.Info(fmt.Sprintf("Monitoring export start listening %s", ":9091"))
+	httpserver := &http.Server{
+		Addr:         ":9091",
+		Handler:      promhttp.Handler(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
 	go func() {
-		err := http.ListenAndServe(":9091", promhttp.Handler())
+		err := httpserver.ListenAndServe()
 		if err != nil {
 			logg.Error(err.Error())
 		}

@@ -2,6 +2,12 @@ package app
 
 import (
 	"fmt"
+	"log"
+	"net"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/go-redis/redis"
 	"github.com/tabularasa31/antibruteforce/config"
 	"github.com/tabularasa31/antibruteforce/internal/controller/repo"
@@ -9,11 +15,6 @@ import (
 	"github.com/tabularasa31/antibruteforce/pkg/grpcserver"
 	"github.com/tabularasa31/antibruteforce/pkg/logger"
 	"github.com/tabularasa31/antibruteforce/pkg/postgres"
-	"log"
-	"net"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func Run(cfg *config.Config) {
@@ -47,7 +48,7 @@ func Run(cfg *config.Config) {
 	// Postgres db create
 	db, err := postgres.New(cfg)
 	if err != nil {
-		log.Fatalf("app - Run - repo - postgres.New: %v", err)
+		logg.Fatal(fmt.Sprintf("app - Run - repo - postgres.New: %v", err))
 	}
 	defer db.Close()
 	logg.Info("...postgres successfully connected")
@@ -71,17 +72,14 @@ func Run(cfg *config.Config) {
 		}
 	}()
 
-	grpcServer := grpcserver.New(useCases, lis, logg, cfg)
+	grpcServer := grpcserver.New(useCases, lis, logg)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	select {
-	case s := <-interrupt:
-		logg.Info("app - Run - signal: " + s.String())
-	}
+	s := <-interrupt
+	logg.Info("app - Run - signal: " + s.String())
 
 	grpcServer.Shutdown()
-
 }

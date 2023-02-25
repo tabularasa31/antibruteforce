@@ -22,10 +22,3 @@ func (u *UseCases) CheckSubnetColor(ctx context.Context, subnet string) (string,
 	}
 	return color, nil
 }
-
-//func (lu *ListUseCase) SearchIPInLists(ctx context.Context, ip net.IP) bool {
-//	if found := lu.repo.SearchIP(ctx, ip); found != "" {
-//		return false
-//	}
-//	return true
-//}

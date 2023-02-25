@@ -2,6 +2,9 @@ package grpcv1
 
 import (
 	"context"
+	"net"
+	"time"
+
 	"github.com/golang/protobuf/ptypes/wrappers"
 	proto "github.com/tabularasa31/antibruteforce/api"
 	"github.com/tabularasa31/antibruteforce/internal/models"
@@ -10,8 +13,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"net"
-	"time"
 )
 
 type AntibruteforceService struct {
@@ -28,7 +29,7 @@ func (a *AntibruteforceService) AllowRequest(_ context.Context, in *proto.Reques
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	request := models.Request{Login: in.GetLogin(), Pass: in.GetPass(), Ip: in.GetIp()}
+	request := models.Request{Login: in.GetLogin(), Pass: in.GetPass(), IP: in.GetIp()}
 
 	res := a.useCases.AllowRequest(ctx, request)
 
@@ -38,7 +39,7 @@ func (a *AntibruteforceService) AllowRequest(_ context.Context, in *proto.Reques
 }
 
 func (a *AntibruteforceService) ClearBucket(_ context.Context, in *proto.Request) (*proto.Response, error) {
-	request := models.Request{Login: in.GetLogin(), Ip: in.GetIp()}
+	request := models.Request{Login: in.GetLogin(), IP: in.GetIp()}
 
 	if err := a.useCases.ClearBucket(request); err != nil {
 		return nil, err
@@ -55,19 +56,22 @@ func (a *AntibruteforceService) AddToBlackList(_ context.Context, in *proto.Subn
 	_, subnet, err := net.ParseCIDR(in.GetSubnet())
 	if err != nil {
 		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false}},
+				Ok: &wrappers.BoolValue{Value: false},
+			},
 			status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	message, err := a.useCases.Add(ctx, subnet.String(), "black")
 	if err != nil {
 		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false}},
+				Ok: &wrappers.BoolValue{Value: false},
+			},
 			status.Error(codes.Internal, err.Error())
 	}
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: message}, nil
+		Message: message,
+	}, nil
 }
 
 func (a *AntibruteforceService) AddToWhiteList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
@@ -77,19 +81,22 @@ func (a *AntibruteforceService) AddToWhiteList(_ context.Context, in *proto.Subn
 	_, subnet, err := net.ParseCIDR(in.GetSubnet())
 	if err != nil {
 		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false}},
+				Ok: &wrappers.BoolValue{Value: false},
+			},
 			status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	message, err := a.useCases.Add(ctx, subnet.String(), "white")
 	if err != nil {
 		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false}},
+				Ok: &wrappers.BoolValue{Value: false},
+			},
 			status.Error(codes.Internal, err.Error())
 	}
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: message}, nil
+		Message: message,
+	}, nil
 }
 
 func (a *AntibruteforceService) RemoveFromBlackList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
@@ -99,7 +106,8 @@ func (a *AntibruteforceService) RemoveFromBlackList(_ context.Context, in *proto
 	_, subnet, err := net.ParseCIDR(in.GetSubnet())
 	if err != nil {
 		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false}},
+				Ok: &wrappers.BoolValue{Value: false},
+			},
 			status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -108,7 +116,8 @@ func (a *AntibruteforceService) RemoveFromBlackList(_ context.Context, in *proto
 	}
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: "OK"}, nil
+		Message: "OK",
+	}, nil
 }
 
 func (a *AntibruteforceService) RemoveFromWhiteList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
@@ -118,7 +127,8 @@ func (a *AntibruteforceService) RemoveFromWhiteList(_ context.Context, in *proto
 	_, subnet, err := net.ParseCIDR(in.GetSubnet())
 	if err != nil {
 		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false}},
+				Ok: &wrappers.BoolValue{Value: false},
+			},
 			status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -127,20 +137,6 @@ func (a *AntibruteforceService) RemoveFromWhiteList(_ context.Context, in *proto
 	}
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: "OK"}, nil
+		Message: "OK",
+	}, nil
 }
-
-// TODO: дописать метод поиска ip в списках
-//func (a *AntibruteforceService) SearchInLists(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
-//	ip := net.ParseIP(in.GetSubnet())
-//	if ip == nil {
-//		return &proto.Response{Ok: &wrappers.BoolValue{Value: false}}, status.Error(codes.InvalidArgument, "invalid IP address")
-//	}
-//
-//	value, err := a.listUseCases.SearchIPInLists(ip)
-//	if err != nil {
-//		return &proto.Response{Ok: &wrappers.BoolValue{Value: false}}, status.Error(codes.Internal, err.Error())
-//	}
-//
-//	return &proto.Response{Ok: &wrappers.BoolValue{Value: value}}, nil
-//}

@@ -130,7 +130,8 @@ func (a *AntibruteforceService) RemoveFromWhiteList(_ context.Context, in *proto
 		Message: "OK"}, nil
 }
 
-//func (a *AntibruteforceService) SearchInList(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
+// TODO: дописать метод поиска ip в списках
+//func (a *AntibruteforceService) SearchInLists(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
 //	ip := net.ParseIP(in.GetSubnet())
 //	if ip == nil {
 //		return &proto.Response{Ok: &wrappers.BoolValue{Value: false}}, status.Error(codes.InvalidArgument, "invalid IP address")

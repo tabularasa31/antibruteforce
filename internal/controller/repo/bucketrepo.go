@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/go-redis/redis_rate"
 	"github.com/tabularasa31/antibruteforce/config"
@@ -29,30 +28,27 @@ func NewBucketRepo(r *redis.Client, cfg *config.AppConfig) *BucketRepo {
 	}
 }
 
-func (b *BucketRepo) Allow(request models.Request) bool {
+func (b *BucketRepo) CheckLimit(request models.Request) bool {
 	ip := request.Ip
 	login := request.Login
 	password := request.Pass
 
 	// Check if the rate limits have been exceeded for each key
 	if request.Ip != "" {
-		ipC, ipD, ipOK := b.ipLimiter.AllowMinute(ip, int64(b.cfg.IpLimit))
-		fmt.Printf("ip count - %v | ip delay - %v | ipOK - %v\n", ipC, ipD, ipOK)
+		_, _, ipOK := b.ipLimiter.AllowMinute(ip, int64(b.cfg.IpLimit))
 		if !ipOK {
 			return false
 		}
 	}
 
 	if request.Login != "" {
-		loginC, loginD, loginOK := b.loginLimiter.AllowMinute(login, int64(b.cfg.LoginLimit))
-		fmt.Printf("login count - %v | login delay - %v | loginOK - %v\n", loginC, loginD, loginOK)
+		_, _, loginOK := b.loginLimiter.AllowMinute(login, int64(b.cfg.LoginLimit))
 		if !loginOK {
 			return false
 		}
 	}
 	if request.Pass != "" {
-		passC, passD, passwordOK := b.passwordLimiter.AllowMinute(password, int64(b.cfg.PassLimit))
-		fmt.Printf("password count - %v | password delay - %v | passwordOK - %v\n", passC, passD, passwordOK)
+		_, _, passwordOK := b.passwordLimiter.AllowMinute(password, int64(b.cfg.PassLimit))
 		if !passwordOK {
 			return false
 		}

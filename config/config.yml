@@ -5,21 +5,18 @@
 
 app:
   mode: 'Development'
-  loginLimit: 1
-  passLimit: 2
-  ipLimit: 3
+  loginLimit: 10
+  passLimit: 100
+  ipLimit: 1000
 
 server:
   port: :50051
-  pprofPort: :5555
-  mode: Development
+  mode: development
   jwtSecretKey: secretkey
-  cookieName: jwt-token
   readTimeout: 5
   writeTimeout: 5
   ssl: true
   ctxDefaultTimeout: 12
-  csrf: true
   debug: false
   maxConnectionIdle: 5
   timeout: 15

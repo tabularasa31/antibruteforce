@@ -16,7 +16,7 @@ func init() {
 }
 
 var (
-	cfg = config.AppConfig{IpLimit: 10, LoginLimit: 100, PassLimit: 1000}
+	cfg = config.AppConfig{LoginLimit: 10, PassLimit: 100, IpLimit: 1000}
 
 	request = models.Request{
 		Login: "test_login",
@@ -35,7 +35,7 @@ func TestBucketRepo_Allow(t *testing.T) {
 		name:    "Allowed request",
 		wantRes: true,
 	}, {
-		sleep:   1 * time.Second,
+		sleep:   1 * time.Millisecond,
 		name:    "Not allowed request",
 		wantRes: false,
 	},
@@ -47,12 +47,12 @@ func TestBucketRepo_Allow(t *testing.T) {
 
 	for _, tt := range tests {
 		_ = bucketRepo.ClearBucket(request)
-		for i := 0; i < cfg.IpLimit; i++ {
-			bucketRepo.Allow(request)
+		for i := 0; i < cfg.LoginLimit; i++ {
+			bucketRepo.CheckLimit(request)
 			time.Sleep(tt.sleep)
 		}
 		t.Run(tt.name, func(t *testing.T) {
-			if err := bucketRepo.Allow(request); err != tt.wantRes {
+			if err := bucketRepo.CheckLimit(request); err != tt.wantRes {
 				t.Errorf("AllowRequest = %v, wantRes %v", err, tt.wantRes)
 			}
 		})
@@ -66,13 +66,13 @@ func TestBucketRepo_ClearBucket(t *testing.T) {
 	var bucketRepo = NewBucketRepo(c, &cfg)
 	_ = bucketRepo.ClearBucket(request)
 
-	for i := 0; i < cfg.IpLimit+2; i++ {
-		bucketRepo.Allow(request)
+	for i := 0; i < cfg.LoginLimit+2; i++ {
+		bucketRepo.CheckLimit(request)
 	}
 	t.Run("Bucket cleared successfully", func(t *testing.T) {
 		e := bucketRepo.ClearBucket(request)
 		require.NoError(t, e)
-		if err := bucketRepo.Allow(request); err != true {
+		if err := bucketRepo.CheckLimit(request); err != true {
 			t.Errorf("AllowRequest = %v, wantRes %v", err, true)
 		}
 	})

@@ -1,3 +1,6 @@
+include .env.example
+
+
 # ==============================================================================
 # Main
 run:
@@ -22,3 +25,11 @@ lint: install-lint-deps ### check by golangci linter
 	echo "Starting linters"
 	golangci-lint run
 
+# ==============================================================================
+# Docker compose commands
+
+up:
+	echo "Starting docker environment"
+	docker-compose -f docker-compose.yml up --build
+
+# ==============================================================================

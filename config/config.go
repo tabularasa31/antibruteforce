@@ -26,15 +26,11 @@ type (
 
 	ServerConfig struct {
 		Port              string        `yaml:"port"`
-		PprofPort         string        `yaml:"pprofPort"`
 		Mode              string        `yaml:"mode"`
-		JwtSecretKey      string        `yaml:"jwtSecretKey"`
-		CookieName        string        `yaml:"cookieName"`
 		ReadTimeout       time.Duration `yaml:"readTimeout"`
 		WriteTimeout      time.Duration `yaml:"writeTimeout"`
 		SSL               bool          `yaml:"ssl"`
 		CtxDefaultTimeout time.Duration `yaml:"ctxDefaultTimeout"`
-		CSRF              bool          `yaml:"csrf"`
 		Debug             bool          `yaml:"debug"`
 		MaxConnectionIdle time.Duration `yaml:"maxConnectionIdle"`
 		Timeout           time.Duration `yaml:"timeout"`
@@ -85,12 +81,6 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 	err := v.Unmarshal(&c)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode into struct, %v", err)
-	}
-
-	c.Redis = &Redis{
-		Host:     v.GetString(envConfigRedisHost),
-		Port:     v.GetString(envConfigRedisPort),
-		Password: v.GetString(envConfigRedisPassword),
 	}
 
 	c.Redis.Host = v.GetString(envConfigRedisHost)

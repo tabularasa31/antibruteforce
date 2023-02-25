@@ -13,7 +13,7 @@ func (u *UseCases) AllowRequest(ctx context.Context, request models.Request) boo
 	case "black":
 		return false
 	default:
-		return u.buckets.Allow(request)
+		return u.buckets.CheckLimit(request)
 	}
 }
 

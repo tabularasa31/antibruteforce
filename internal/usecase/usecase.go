@@ -9,8 +9,8 @@ type UseCases struct {
 	lists   repo.ListRepo
 }
 
-// NewUseCases -.
-func NewUseCases(br *repo.BucketRepo, l *repo.ListRepo) *UseCases {
+// New -.
+func New(br *repo.BucketRepo, l *repo.ListRepo) *UseCases {
 	return &UseCases{
 		buckets: *br,
 		lists:   *l,

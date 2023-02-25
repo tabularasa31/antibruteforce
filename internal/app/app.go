@@ -17,6 +17,7 @@ import (
 )
 
 func Run(cfg *config.Config) {
+	// Logger
 	logg, err := logger.GetLogger(cfg)
 	if err != nil {
 		log.Fatalf("unable to load logger: %v", err)
@@ -54,8 +55,8 @@ func Run(cfg *config.Config) {
 	// White and black lists
 	listRepo := repo.NewListRepo(db)
 
-	// Usecases
-	useCases := usecase.NewUseCases(bucketRepo, listRepo)
+	// Use cases
+	useCases := usecase.New(bucketRepo, listRepo)
 
 	// GRPC Server
 	logg.Info("Starting grpc server...")
@@ -80,6 +81,7 @@ func Run(cfg *config.Config) {
 	case s := <-interrupt:
 		logg.Info("app - Run - signal: " + s.String())
 	}
+
 	grpcServer.Shutdown()
 
 }

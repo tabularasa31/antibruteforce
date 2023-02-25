@@ -3,6 +3,10 @@ package grpcserver
 import (
 	"fmt"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
+
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	proto "github.com/tabularasa31/antibruteforce/api"
 	"github.com/tabularasa31/antibruteforce/config"
@@ -14,13 +18,6 @@ import (
 	"google.golang.org/grpc/reflection"
 	"net"
 	"time"
-)
-
-const (
-	_defaultMaxConnectionIdle = 5 * time.Minute
-	_defaultMaxConnectionAge  = 5 * time.Minute
-	_defaultTimeout           = 15 * time.Second
-	_defaultTime              = 5 * time.Minute
 )
 
 type Server struct {
@@ -48,6 +45,7 @@ func New(
 		}),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_zap.UnaryServerInterceptor(logg),
+			grpc_prometheus.UnaryServerInterceptor,
 		)),
 	)
 	reflection.Register(grpcServer)
@@ -61,6 +59,19 @@ func New(
 	srv := grpcv1.NewAntibruteforceService(*useCases, *logg)
 	proto.RegisterAntiBruteforceServer(s.Server, srv)
 
+	// start monitoring
+	grpc_prometheus.Register(grpcServer)
+	grpc_prometheus.EnableHandlingTimeHistogram()
+	logg.Info(fmt.Sprintf("Monitoring export listen %s", ":9091"))
+	go func() {
+		err := http.ListenAndServe(":9091", promhttp.Handler())
+		if err != nil {
+			logg.Error(err.Error())
+		}
+		http.Handle("/metrics", promhttp.Handler())
+	}()
+
+	// start server
 	s.Start(lis)
 
 	return s
@@ -79,80 +90,7 @@ func (s *Server) Notify() <-chan error {
 }
 
 // Shutdown -.
-func (s *Server) Shutdown() error {
+func (s *Server) Shutdown() {
 	s.Server.GracefulStop()
-	s.logg.Info("grpc Server Exited Properly")
-	return s.Listener.Close()
+	s.logg.Info("gRPC server gracefully stopped")
 }
-
-//-------------
-
-//package grpcserver
-//
-//import (
-//"context"
-//"fmt"
-//"net"
-//
-//"google.golang.org/grpc"
-//)
-//
-//type Server struct {
-//	Address string
-//	Server  *grpc.Server
-//}
-//
-//func NewServer(address string, server *grpc.Server) *Server {
-//	return &Server{
-//		Address: address,
-//		Server:  server,
-//	}
-//}
-
-//func (s *Server) Start() error {
-//	listener, err := net.Listen("tcp", s.Address)
-//	if err != nil {
-//		return err
-//	}
-//
-//	go func() {
-//		if err := s.Server.Serve(listener); err != nil {
-//			fmt.Printf("gRPC server error: %v\n", err)
-//		}
-//	}()
-//
-//	fmt.Printf("gRPC server started on %s\n", s.Address)
-//	return nil
-//}
-
-func (s *Server) Stop() {
-	s.Server.Stop()
-	fmt.Printf("gRPC server stopped")
-}
-
-func (s *Server) GracefulStop() {
-	s.Server.GracefulStop()
-	fmt.Printf("gRPC server gracefully stopped")
-}
-
-//func (s *Server) StopWithGracePeriod(gracePeriod int) {
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(gracePeriod)*time.Second)
-//	defer cancel()
-//	s.Server.GracefulStop()
-//
-//	fmt.Printf("gRPC server stopped with grace period of %d seconds on %s\n", gracePeriod, s.cfg.Server.Port)
-//}
-
-//func (s *Server) StopWithGracePeriod(gracePeriod int) {
-//	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(gracePeriod)*time.Second)
-//	defer cancel()
-//
-//	if s.GracefulStop() == nil {
-//		fmt.Printf("gRPC server gracefully stopped on %s\n", s.Address)
-//		return
-//	}
-//
-//	<-ctx.Done()
-//
-//	fmt.Printf("gRPC server stopped with grace period of %d seconds on %s\n", gracePeriod, s.Address)
-//}

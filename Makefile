@@ -18,10 +18,11 @@ generate:
 # ==============================================================================
 # Tools commands
 
-install-lint-deps:
-	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
+#install-lint-deps:
+#	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1
 
-lint: install-lint-deps ### check by golangci linter
+#lint: install-lint-deps ### check by golangci linter
+lint:
 	echo "Starting linters"
 	golangci-lint run
 

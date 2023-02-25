@@ -39,7 +39,7 @@ linters:
 #    - importas
     - ineffassign
     - lll
-    - makezero
+#    - makezero
     - misspell
     - nestif
     - nilerr

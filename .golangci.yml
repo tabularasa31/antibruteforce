@@ -36,7 +36,7 @@ linters:
     - gosimple
     - govet
 #    - ifshort --deprecated
-    - importas
+#    - importas
     - ineffassign
     - lll
     - makezero

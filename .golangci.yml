@@ -15,12 +15,12 @@ linters:
     - depguard
     - dogsled
     - dupl
-#    - durationcheck
-#    - errorlint
+    - durationcheck
+    - errorlint
     - exhaustive
     - exportloopref
     - funlen
-#    - gci
+    - gci
     - gocognit
     - goconst
     - gocritic
@@ -29,25 +29,25 @@ linters:
     - gofmt
     - gofumpt
     - goheader
-#    - gomoddirectives
+    - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
     - govet
 #    - ifshort --deprecated
-#    - importas
+    - importas
     - ineffassign
     - lll
-#    - makezero
+    - makezero
     - misspell
     - nestif
-#    - nilerr
+    - nilerr
     - noctx
     - nolintlint
     - prealloc
-#    - predeclared
-#    - revive
+    - predeclared
+    - revive
 #    - rowserrcheck --is disabled because of generics
 #    - sqlclosecheck --is disabled because of generics.
     - staticcheck

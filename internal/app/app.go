@@ -36,11 +36,11 @@ func Run(cfg *config.Config) {
 	}
 
 	newRedis := redis.NewClient(opt)
-	if err := newRedis.Ping(); err.String() != "ping: PONG" {
-		logg.Fatal(fmt.Sprintf("client Redis ping connection error: %v", err))
+	if er := newRedis.Ping(); er.String() != "ping: PONG" {
+		logg.Error(fmt.Sprintf("client Redis ping connection error: %v", err))
+	} else {
+		logg.Info("...redis successfully connected")
 	}
-
-	logg.Info("...redis successfully connected")
 
 	// Bucket repo
 	bucketRepo := repo.NewBucketRepo(newRedis, &cfg.App)
@@ -48,10 +48,11 @@ func Run(cfg *config.Config) {
 	// Postgres db create
 	db, err := postgres.New(cfg)
 	if err != nil {
-		logg.Fatal(fmt.Sprintf("app - Run - repo - postgres.New: %v", err))
+		logg.Error(fmt.Sprintf("app - Run - postgres.New: %v", err))
+	} else {
+		logg.Info("...postgres successfully connected")
 	}
 	defer db.Close()
-	logg.Info("...postgres successfully connected")
 
 	// White and black lists
 	listRepo := repo.NewListRepo(db)
@@ -64,7 +65,7 @@ func Run(cfg *config.Config) {
 
 	lis, err := net.Listen("tcp", cfg.Server.Port)
 	if err != nil {
-		logg.Fatal(fmt.Sprintf("app - Run - net.Listen: %v", err))
+		logg.Error(fmt.Sprintf("app - Run - net.Listen: %v", err))
 	}
 	defer func() {
 		if e := lis.Close(); e != nil {

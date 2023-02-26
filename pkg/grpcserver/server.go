@@ -33,12 +33,7 @@ type Server struct {
 	notify   chan error
 }
 
-// Start server -.
-func New(
-	useCases *usecase.UseCases,
-	lis net.Listener,
-	logg *zap.Logger,
-) *Server {
+func New(useCases *usecase.UseCases, lis net.Listener, logg *zap.Logger) *Server {
 	grpcServer := grpc.NewServer(
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: _defaultMaxConnectionIdle,
@@ -59,7 +54,7 @@ func New(
 		logg:   logg,
 	}
 
-	srv := grpcv1.NewAntibruteforceService(*useCases, *logg)
+	srv := grpcv1.NewAntibruteforceService(useCases, logg)
 	proto.RegisterAntiBruteforceServer(s.Server, srv)
 
 	// start monitoring
@@ -73,8 +68,7 @@ func New(
 		WriteTimeout: 10 * time.Second,
 	}
 	go func() {
-		err := httpserver.ListenAndServe()
-		if err != nil {
+		if err := httpserver.ListenAndServe(); err != nil {
 			logg.Error(err.Error())
 		}
 		http.Handle("/metrics", promhttp.Handler())

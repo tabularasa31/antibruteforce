@@ -15,18 +15,24 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+const (
+	whitelist = "white"
+	blacklist = "black"
+	ok        = "OK"
+)
+
 type AntibruteforceService struct {
-	useCases usecase.UseCases
-	logg     zap.Logger
+	useCases *usecase.UseCases
+	logg     *zap.Logger
 	proto.UnimplementedAntiBruteforceServer
 }
 
-func NewAntibruteforceService(u usecase.UseCases, logg zap.Logger) *AntibruteforceService {
+func NewAntibruteforceService(u *usecase.UseCases, logg *zap.Logger) *AntibruteforceService {
 	return &AntibruteforceService{useCases: u, logg: logg}
 }
 
-func (a *AntibruteforceService) AllowRequest(_ context.Context, in *proto.Request) (*proto.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (a *AntibruteforceService) AllowRequest(ctx context.Context, in *proto.Request) (*proto.Response, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	request := models.Request{Login: in.GetLogin(), Pass: in.GetPass(), IP: in.GetIp()}
@@ -49,19 +55,19 @@ func (a *AntibruteforceService) ClearBucket(_ context.Context, in *proto.Request
 	}, nil
 }
 
-func (a *AntibruteforceService) AddToBlackList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (a *AntibruteforceService) AddToBlackList(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, subnet, err := net.ParseCIDR(in.GetSubnet())
-	if err != nil {
+	subnet, er := a.getSubnet(in.GetSubnet())
+	if er != nil {
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
 			},
-			status.Error(codes.InvalidArgument, err.Error())
+			status.Error(codes.InvalidArgument, er.Error())
 	}
 
-	message, err := a.useCases.Add(ctx, subnet.String(), "black")
+	message, err := a.useCases.Add(ctx, subnet, blacklist)
 	if err != nil {
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
@@ -74,19 +80,19 @@ func (a *AntibruteforceService) AddToBlackList(_ context.Context, in *proto.Subn
 	}, nil
 }
 
-func (a *AntibruteforceService) AddToWhiteList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (a *AntibruteforceService) AddToWhiteList(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, subnet, err := net.ParseCIDR(in.GetSubnet())
-	if err != nil {
+	subnet, er := a.getSubnet(in.GetSubnet())
+	if er != nil {
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
 			},
-			status.Error(codes.InvalidArgument, err.Error())
+			status.Error(codes.InvalidArgument, er.Error())
 	}
 
-	message, err := a.useCases.Add(ctx, subnet.String(), "white")
+	message, err := a.useCases.Add(ctx, subnet, whitelist)
 	if err != nil {
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
@@ -99,44 +105,52 @@ func (a *AntibruteforceService) AddToWhiteList(_ context.Context, in *proto.Subn
 	}, nil
 }
 
-func (a *AntibruteforceService) RemoveFromBlackList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (a *AntibruteforceService) RemoveFromBlackList(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, subnet, err := net.ParseCIDR(in.GetSubnet())
-	if err != nil {
+	subnet, er := a.getSubnet(in.GetSubnet())
+	if er != nil {
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
 			},
-			status.Error(codes.InvalidArgument, err.Error())
+			status.Error(codes.InvalidArgument, er.Error())
 	}
 
-	if err := a.useCases.Remove(ctx, subnet.String(), "black"); err != nil {
+	if err := a.useCases.Remove(ctx, subnet, blacklist); err != nil {
 		return nil, err
 	}
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: "OK",
+		Message: ok,
 	}, nil
 }
 
-func (a *AntibruteforceService) RemoveFromWhiteList(_ context.Context, in *proto.Subnet) (*proto.Response, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (a *AntibruteforceService) RemoveFromWhiteList(ctx context.Context, in *proto.Subnet) (*proto.Response, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	_, subnet, err := net.ParseCIDR(in.GetSubnet())
-	if err != nil {
+	subnet, er := a.getSubnet(in.GetSubnet())
+	if er != nil {
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
 			},
-			status.Error(codes.InvalidArgument, err.Error())
+			status.Error(codes.InvalidArgument, er.Error())
 	}
 
-	if err := a.useCases.Remove(ctx, subnet.String(), "white"); err != nil {
+	if err := a.useCases.Remove(ctx, subnet, whitelist); err != nil {
 		return nil, err
 	}
+
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: "OK",
+		Message: ok,
 	}, nil
+}
+
+func (a AntibruteforceService) getSubnet(in string) (string, error) {
+	_, subnet, err := net.ParseCIDR(in)
+
+	s := subnet.String()
+	return s, err
 }

@@ -40,9 +40,9 @@ type (
 	}
 
 	Redis struct {
-		Host     string
-		Port     string
-		Password string
+		Host     string `env:"APP_REDIS_HOST"`
+		Port     string `env:"APP_REDIS_PORT"`
+		Password string `env:"APP_REDIS_PASSWORD"`
 	}
 
 	Postgres struct {
@@ -74,8 +74,7 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 func ParseConfig(v *viper.Viper) (*Config, error) {
 	var c Config
 
-	err := v.Unmarshal(&c)
-	if err != nil {
+	if err := v.Unmarshal(&c); err != nil {
 		return nil, fmt.Errorf("unable to decode into struct, %w", err)
 	}
 

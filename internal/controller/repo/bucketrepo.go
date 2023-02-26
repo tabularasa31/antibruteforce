@@ -30,26 +30,22 @@ func NewBucketRepo(r *redis.Client, cfg *config.AppConfig) *BucketRepo {
 }
 
 func (b *BucketRepo) CheckLimit(request models.Request) bool {
-	ip := request.IP
-	login := request.Login
-	password := request.Pass
-
 	// Check if the rate limits have been exceeded for each key
 	if request.IP != "" {
-		_, _, ipOK := b.ipLimiter.AllowMinute(ip, int64(b.cfg.IPLimit))
+		_, _, ipOK := b.ipLimiter.AllowMinute(request.IP, int64(b.cfg.IPLimit))
 		if !ipOK {
 			return false
 		}
 	}
 
 	if request.Login != "" {
-		_, _, loginOK := b.loginLimiter.AllowMinute(login, int64(b.cfg.LoginLimit))
+		_, _, loginOK := b.loginLimiter.AllowMinute(request.Login, int64(b.cfg.LoginLimit))
 		if !loginOK {
 			return false
 		}
 	}
 	if request.Pass != "" {
-		_, _, passwordOK := b.passwordLimiter.AllowMinute(password, int64(b.cfg.PassLimit))
+		_, _, passwordOK := b.passwordLimiter.AllowMinute(request.Pass, int64(b.cfg.PassLimit))
 		if !passwordOK {
 			return false
 		}

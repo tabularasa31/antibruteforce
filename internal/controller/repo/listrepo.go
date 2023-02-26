@@ -71,9 +71,6 @@ func (lr *ListRepo) CheckColor(ctx context.Context, subnet string) (string, erro
 	}
 
 	row := lr.Postgres.Pool.QueryRow(ctx, sql, args...)
-	if err != nil {
-		return "", fmt.Errorf("repo - CheckColor - lr.Pool.QueryRow: %w", err)
-	}
 
 	color := ""
 	if er := row.Scan(&color); er != nil {

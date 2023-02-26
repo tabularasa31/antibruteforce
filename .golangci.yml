@@ -47,7 +47,7 @@ linters:
     - nolintlint
     - prealloc
 #    - predeclared
-    - revive
+#    - revive
 #    - rowserrcheck --is disabled because of generics
 #    - sqlclosecheck --is disabled because of generics.
     - staticcheck

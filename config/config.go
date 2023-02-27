@@ -72,7 +72,7 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 
 // ParseConfig Parse config file -.
 func ParseConfig(v *viper.Viper) (*Config, error) {
-	var c = &Config{Redis: Redis{"", "", ""}}
+	c := &Config{Redis: Redis{"", "", ""}}
 
 	if err := v.Unmarshal(&c); err != nil {
 		return nil, fmt.Errorf("unable to decode into struct, %w", err)

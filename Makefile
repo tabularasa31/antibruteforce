@@ -5,8 +5,8 @@ BIN_APP="./bin/antibruteforce"
 
 # ==============================================================================
 # Main
-run:
-	$(BIN_APP) -config /config/config.yml
+run: build
+	$(BIN_APP)
 
 build:
 	go build -v -o $(BIN_APP) ./cmd/

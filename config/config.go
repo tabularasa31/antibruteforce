@@ -13,7 +13,7 @@ type (
 		App      AppConfig
 		Server   ServerConfig
 		Logger   LoggerConfig
-		Redis    *Redis
+		Redis    Redis
 		Postgres Postgres
 	}
 
@@ -55,7 +55,7 @@ type (
 func LoadConfig(filename string) (*viper.Viper, error) {
 	v := viper.New()
 
-	v.SetConfigName(filename)
+	v.SetConfigFile(filename)
 	v.AddConfigPath(".")
 	v.SetEnvPrefix("app")
 	v.AutomaticEnv()
@@ -72,7 +72,7 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 
 // ParseConfig Parse config file -.
 func ParseConfig(v *viper.Viper) (*Config, error) {
-	var c Config
+	var c = &Config{Redis: Redis{"", "", ""}}
 
 	if err := v.Unmarshal(&c); err != nil {
 		return nil, fmt.Errorf("unable to decode into struct, %w", err)
@@ -80,7 +80,8 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 
 	c.Redis.Host = v.GetString(envConfigRedisHost)
 	if c.Redis.Host == "" {
-		c.Redis.Host = "localhost"
+		v.SetDefault(envConfigRedisHost, "localhost")
+		c.Redis.Host = v.GetString(envConfigRedisHost)
 	}
 	c.Redis.Port = v.GetString(envConfigRedisPort)
 	if c.Redis.Port == "" {
@@ -88,7 +89,7 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 	}
 	c.Redis.Password = v.GetString(envConfigRedisPassword)
 
-	return &c, nil
+	return c, nil
 }
 
 // GetConfig Get config -.

@@ -3,7 +3,6 @@ syntax = "proto3";
 package service;
 option go_package=".;proto";
 
-//import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
 message Request {
@@ -19,6 +18,10 @@ message Response {
 
 message Subnet {
   string subnet = 1;
+}
+
+message ListResponse {
+
 }
 
 service AntiBruteforce{

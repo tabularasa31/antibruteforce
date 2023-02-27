@@ -68,15 +68,16 @@ func (a *AntibruteforceService) AddToBlackList(ctx context.Context, in *proto.Su
 			status.Error(codes.InvalidArgument, er.Error())
 	}
 
-	message, err := a.useCases.Add(ctx, subnet, blacklist)
+	ok, message, err := a.useCases.Add(ctx, subnet, blacklist)
 	if err != nil {
+		a.logg.Error(err.Error())
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
 			},
-			status.Error(codes.Internal, err.Error())
+			status.Error(codes.Internal, "Internal problems")
 	}
 	return &proto.Response{
-		Ok:      &wrappers.BoolValue{Value: true},
+		Ok:      &wrappers.BoolValue{Value: ok},
 		Message: message,
 	}, nil
 }
@@ -93,15 +94,16 @@ func (a *AntibruteforceService) AddToWhiteList(ctx context.Context, in *proto.Su
 			status.Error(codes.InvalidArgument, er.Error())
 	}
 
-	message, err := a.useCases.Add(ctx, subnet, whitelist)
+	ok, message, err := a.useCases.Add(ctx, subnet, whitelist)
 	if err != nil {
+		a.logg.Error(err.Error())
 		return &proto.Response{
 				Ok: &wrappers.BoolValue{Value: false},
 			},
-			status.Error(codes.Internal, err.Error())
+			status.Error(codes.Internal, "Internal problems")
 	}
 	return &proto.Response{
-		Ok:      &wrappers.BoolValue{Value: true},
+		Ok:      &wrappers.BoolValue{Value: ok},
 		Message: message,
 	}, nil
 }
@@ -149,9 +151,7 @@ func (a *AntibruteforceService) RemoveFromWhiteList(ctx context.Context, in *pro
 	}, nil
 }
 
-func (a AntibruteforceService) getSubnet(in string) (string, error) {
+func (a *AntibruteforceService) getSubnet(in string) (string, error) {
 	_, subnet, err := net.ParseCIDR(in)
-
-	s := subnet.String()
-	return s, err
+	return subnet.String(), err
 }

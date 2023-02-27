@@ -186,6 +186,44 @@ func (x *Subnet) GetSubnet() string {
 	return ""
 }
 
+type ListResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ListResponse) Reset() {
+	*x = ListResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_antibruteforce_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListResponse) ProtoMessage() {}
+
+func (x *ListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_antibruteforce_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
+func (*ListResponse) Descriptor() ([]byte, []int) {
+	return file_antibruteforce_proto_rawDescGZIP(), []int{3}
+}
+
 var File_antibruteforce_proto protoreflect.FileDescriptor
 
 var file_antibruteforce_proto_rawDesc = []byte{
@@ -204,7 +242,8 @@ var file_antibruteforce_proto_rawDesc = []byte{
 	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d,
 	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x20, 0x0a, 0x06, 0x53, 0x75, 0x62, 0x6e, 0x65, 0x74,
 	0x12, 0x16, 0x0a, 0x06, 0x73, 0x75, 0x62, 0x6e, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x06, 0x73, 0x75, 0x62, 0x6e, 0x65, 0x74, 0x32, 0xdb, 0x02, 0x0a, 0x0e, 0x41, 0x6e, 0x74,
+	0x52, 0x06, 0x73, 0x75, 0x62, 0x6e, 0x65, 0x74, 0x22, 0x0e, 0x0a, 0x0c, 0x4c, 0x69, 0x73, 0x74,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xdb, 0x02, 0x0a, 0x0e, 0x41, 0x6e, 0x74,
 	0x69, 0x42, 0x72, 0x75, 0x74, 0x65, 0x66, 0x6f, 0x72, 0x63, 0x65, 0x12, 0x33, 0x0a, 0x0c, 0x41,
 	0x6c, 0x6c, 0x6f, 0x77, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x10, 0x2e, 0x73, 0x65,
 	0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x11, 0x2e,
@@ -242,15 +281,16 @@ func file_antibruteforce_proto_rawDescGZIP() []byte {
 	return file_antibruteforce_proto_rawDescData
 }
 
-var file_antibruteforce_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_antibruteforce_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_antibruteforce_proto_goTypes = []interface{}{
 	(*Request)(nil),              // 0: service.Request
 	(*Response)(nil),             // 1: service.Response
 	(*Subnet)(nil),               // 2: service.Subnet
-	(*wrapperspb.BoolValue)(nil), // 3: google.protobuf.BoolValue
+	(*ListResponse)(nil),         // 3: service.ListResponse
+	(*wrapperspb.BoolValue)(nil), // 4: google.protobuf.BoolValue
 }
 var file_antibruteforce_proto_depIdxs = []int32{
-	3, // 0: service.Response.ok:type_name -> google.protobuf.BoolValue
+	4, // 0: service.Response.ok:type_name -> google.protobuf.BoolValue
 	0, // 1: service.AntiBruteforce.AllowRequest:input_type -> service.Request
 	0, // 2: service.AntiBruteforce.ClearBucket:input_type -> service.Request
 	2, // 3: service.AntiBruteforce.AddToBlackList:input_type -> service.Subnet
@@ -312,6 +352,18 @@ func file_antibruteforce_proto_init() {
 				return nil
 			}
 		}
+		file_antibruteforce_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -319,7 +371,7 @@ func file_antibruteforce_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_antibruteforce_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

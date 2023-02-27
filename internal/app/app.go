@@ -67,11 +67,6 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		logg.Error(fmt.Sprintf("app - Run - net.Listen: %v", err))
 	}
-	defer func() {
-		if e := lis.Close(); e != nil {
-			logg.Fatal(fmt.Sprintf("...failed to close client, error: %v\n", e))
-		}
-	}()
 
 	grpcServer := grpcserver.New(useCases, lis, logg)
 

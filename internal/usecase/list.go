@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func (u *UseCases) Add(ctx context.Context, subnet string, color string) (string, error) {
+func (u *UseCases) Add(ctx context.Context, subnet string, color string) (bool, string, error) {
 	return u.lists.SaveToList(ctx, subnet, color)
 }
 

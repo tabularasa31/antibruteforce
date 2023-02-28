@@ -10,25 +10,24 @@ app:
   ipLimit: 1000
 
 server:
-  port: :5001
-  pprofPort: :5555
-  mode: Development
+  port: :50051
+  mode: development
   jwtSecretKey: secretkey
-  cookieName: jwt-token
   readTimeout: 5
   writeTimeout: 5
   ssl: true
   ctxDefaultTimeout: 12
-  csrf: true
   debug: false
-  maxConnectionIdle: 5
-  timeout: 15
-  maxConnectionAge: 5
-  time: 120
 
 logger:
   development: true
   level: info
 
-db: 'list.db'
+postgres:
+  dsn: 'postgres://postgres:passpass@localhost:5432/abfdb'
+  pool_max: 2
 
+
+#  dsn: 'postgres://abf:passpass@localhost:5432/abfdb'
+#
+#'pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass'

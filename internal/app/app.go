@@ -2,61 +2,80 @@ package app
 
 import (
 	"fmt"
-	"github.com/tabularasa31/antibruteforce/config"
-	"github.com/tabularasa31/antibruteforce/internal/controller/repo"
-	"github.com/tabularasa31/antibruteforce/pkg/boltdb"
-	"github.com/tabularasa31/antibruteforce/pkg/grpcserver"
-	"github.com/tabularasa31/antibruteforce/pkg/logger"
-	"github.com/tabularasa31/antibruteforce/pkg/redis"
+	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/go-redis/redis"
+	"github.com/tabularasa31/antibruteforce/config"
+	"github.com/tabularasa31/antibruteforce/internal/controller/repo"
+	"github.com/tabularasa31/antibruteforce/internal/usecase"
+	"github.com/tabularasa31/antibruteforce/pkg/grpcserver"
+	"github.com/tabularasa31/antibruteforce/pkg/logger"
+	"github.com/tabularasa31/antibruteforce/pkg/postgres"
 )
 
 func Run(cfg *config.Config) {
-	appLogger := logger.NewAPILogger(cfg)
-	appLogger.InitLogger()
-	appLogger.Infof(
-		"LogLevel: %s, Mode: %s, SSL: %v",
-		cfg.Logger.Level,
-		cfg.Server.Mode,
-		cfg.Server.SSL,
-	)
-	appLogger.Infof("Success parsed config")
+	// Logger
+	logg, err := logger.GetLogger(cfg)
+	if err != nil {
+		log.Fatalf("unable to load logger: %v", err)
+	}
+	defer func() {
+		_ = logg.Sync()
+	}()
+
+	logg.Info("...config successfully parsed")
 
 	// Redis
-	newRedis := redis.NewRedis(cfg)
-	appLogger.Infof("............redis successfully connected")
+	opt := &redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
+		Password: cfg.Redis.Password,
+	}
+
+	newRedis := redis.NewClient(opt)
+	if er := newRedis.Ping(); er.String() != "ping: PONG" {
+		logg.Error(fmt.Sprintf("client Redis ping connection error: %v", err))
+	} else {
+		logg.Info("...redis successfully connected")
+	}
 
 	// Bucket repo
-	bucketRepo := repo.NewBucketRepo(newRedis)
+	bucketRepo := repo.NewBucketRepo(newRedis, &cfg.App)
 
-	// BoltDB
-	// Open a connection to the BoltDB database
-	err := boltdb.Init(cfg.DB)
+	// Postgres db create
+	db, err := postgres.New(cfg)
 	if err != nil {
-		fmt.Println(err)
+		logg.Error(fmt.Sprintf("app - Run - postgres.New: %v", err))
+	} else {
+		logg.Info("...postgres successfully connected")
 	}
-	defer boltdb.Close()
-	appLogger.Infof("............boltdb successfully connected")
-
-	// Get a reference to the BoltDB instance
-	db := boltdb.GetDB()
+	defer db.Close()
 
 	// White and black lists
 	listRepo := repo.NewListRepo(db)
 
+	// Use cases
+	useCases := usecase.New(bucketRepo, listRepo)
+
 	// GRPC Server
-	appLogger.Infof("Starting server...")
-	s := grpcserver.NewServer(bucketRepo, listRepo, appLogger, cfg)
+	logg.Info("Starting grpc server...")
 
-	if err := s.Start(); err != nil {
-		appLogger.Fatal("Failed ti start GRPC server: %v", err)
+	lis, err := net.Listen("tcp", cfg.Server.Port)
+	if err != nil {
+		logg.Error(fmt.Sprintf("app - Run - net.Listen: %v", err))
 	}
-	defer s.Shutdown()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	<-quit
+	grpcServer := grpcserver.New(useCases, lis, logg)
 
+	// Waiting signal
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	s := <-interrupt
+	logg.Info("app - Run - signal: " + s.String())
+
+	grpcServer.Shutdown()
 }

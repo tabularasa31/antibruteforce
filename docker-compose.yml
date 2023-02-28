@@ -1,16 +1,57 @@
-version: "3.9"
+version: '3.9'
 
 services:
   antibruteforce:
-    container_name: antibruteforce
+    container_name: antibruteforce-service
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: build/antibruteforce/Dockerfile
     ports:
       - '50051:50051'
+      - '9091:9091'  #for prometheus
+    networks:
+      - default
+      - monitoring
+
+  postgres:
+    image: 'postgres'
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'passpass'
+      POSTGRES_DB: 'abfdb'
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: always
     networks:
       - default
 
+  redis:
+    image: 'redis:alpine'
+    command: redis-server --requirepass {$APP_REDIS_PASSWORD}
+    ports:
+      - '6379:6379'
+    volumes:
+      - $PWD/redis-data:/var/lib/redis
+      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - default
+
+  prometheus:
+    build:
+      context: .
+      dockerfile: build/prometheus/Dockerfile
+      network: host
+    ports:
+      - '9090:9090'
+    networks:
+      - monitoring
+
 networks:
   default:
+    driver: bridge
+  monitoring:
     driver: bridge

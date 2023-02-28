@@ -10,36 +10,28 @@ import (
 
 type (
 	Config struct {
-		App    AppConfig
-		Server ServerConfig
-		Logger LoggerConfig
-		DB     string `yaml:"db"`
-		Redis  *Redis
+		App      AppConfig
+		Server   ServerConfig
+		Logger   LoggerConfig
+		Redis    Redis
+		Postgres Postgres
 	}
 
 	AppConfig struct {
 		Mode       string `yaml:"mode"`
 		LoginLimit int    `yaml:"loginLimit"`
 		PassLimit  int    `yaml:"passLimit"`
-		IpLimit    int    `yaml:"ipLimit"`
+		IPLimit    int    `yaml:"ipLimit"`
 	}
 
 	ServerConfig struct {
 		Port              string        `yaml:"port"`
-		PprofPort         string        `yaml:"pprofPort"`
 		Mode              string        `yaml:"mode"`
-		JwtSecretKey      string        `yaml:"jwtSecretKey"`
-		CookieName        string        `yaml:"cookieName"`
 		ReadTimeout       time.Duration `yaml:"readTimeout"`
 		WriteTimeout      time.Duration `yaml:"writeTimeout"`
 		SSL               bool          `yaml:"ssl"`
 		CtxDefaultTimeout time.Duration `yaml:"ctxDefaultTimeout"`
-		CSRF              bool          `yaml:"csrf"`
 		Debug             bool          `yaml:"debug"`
-		MaxConnectionIdle time.Duration `yaml:"maxConnectionIdle"`
-		Timeout           time.Duration `yaml:"timeout"`
-		MaxConnectionAge  time.Duration `yaml:"maxConnectionAge"`
-		Time              time.Duration `yaml:"time"`
 	}
 
 	LoggerConfig struct {
@@ -48,9 +40,14 @@ type (
 	}
 
 	Redis struct {
-		Host     string
-		Port     string
-		Password string
+		Host     string `env:"APP_REDIS_HOST"`
+		Port     string `env:"APP_REDIS_PORT"`
+		Password string `env:"APP_REDIS_PASSWORD"`
+	}
+
+	Postgres struct {
+		Dsn     string `yaml:"dsn"`
+		PoolMax int    `yaml:"poolMax" env:"PG_POOL_MAX"`
 	}
 )
 
@@ -58,7 +55,7 @@ type (
 func LoadConfig(filename string) (*viper.Viper, error) {
 	v := viper.New()
 
-	v.SetConfigName(filename)
+	v.SetConfigFile(filename)
 	v.AddConfigPath(".")
 	v.SetEnvPrefix("app")
 	v.AutomaticEnv()
@@ -75,22 +72,16 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 
 // ParseConfig Parse config file -.
 func ParseConfig(v *viper.Viper) (*Config, error) {
-	var c Config
+	c := &Config{Redis: Redis{"", "", ""}}
 
-	err := v.Unmarshal(&c)
-	if err != nil {
-		return nil, fmt.Errorf("unable to decode into struct, %v", err)
-	}
-
-	c.Redis = &Redis{
-		Host:     v.GetString(envConfigRedisHost),
-		Port:     v.GetString(envConfigRedisPort),
-		Password: v.GetString(envConfigRedisPassword),
+	if err := v.Unmarshal(&c); err != nil {
+		return nil, fmt.Errorf("unable to decode into struct, %w", err)
 	}
 
 	c.Redis.Host = v.GetString(envConfigRedisHost)
 	if c.Redis.Host == "" {
-		c.Redis.Host = "localhost"
+		v.SetDefault(envConfigRedisHost, "localhost")
+		c.Redis.Host = v.GetString(envConfigRedisHost)
 	}
 	c.Redis.Port = v.GetString(envConfigRedisPort)
 	if c.Redis.Port == "" {
@@ -98,7 +89,7 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 	}
 	c.Redis.Password = v.GetString(envConfigRedisPassword)
 
-	return &c, nil
+	return c, nil
 }
 
 // GetConfig Get config -.

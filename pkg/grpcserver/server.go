@@ -1,66 +1,99 @@
 package grpcserver
 
 import (
-	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpcctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
-	"github.com/tabularasa31/antibruteforce/config"
-	"github.com/tabularasa31/antibruteforce/internal/controller/repo"
-	"github.com/tabularasa31/antibruteforce/pkg/interceptors"
-	"github.com/tabularasa31/antibruteforce/pkg/logger"
+	"fmt"
+	"net"
+	"net/http"
+	"time"
+
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	proto "github.com/tabularasa31/antibruteforce/api"
+	grpcv1 "github.com/tabularasa31/antibruteforce/internal/controller/grpc/v1"
+	"github.com/tabularasa31/antibruteforce/internal/usecase"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"time"
+)
+
+const (
+	_defaultMaxConnectionIdle = 5 * time.Minute
+	_defaultMaxConnectionAge  = 5 * time.Minute
+	_defaultTimeout           = 15 * time.Second
+	_defaultTime              = 5 * time.Minute
 )
 
 type Server struct {
 	Server   *grpc.Server
 	Listener net.Listener
-	buckets  *repo.BucketRepo
-	lists    *repo.ListRepo
-	logger   logger.Logger
-	cfg      *config.Config
+	logg     *zap.Logger
+	notify   chan error
 }
 
-// NewServer Server constructor -.
-func NewServer(buckets *repo.BucketRepo, lists *repo.ListRepo, logger logger.Logger, cfg *config.Config) *Server {
-	return &Server{buckets: buckets, lists: lists, logger: logger, cfg: cfg}
-}
-
-// Start server -.
-func (s *Server) Start() error {
-	im := interceptors.NewInterceptorManager(s.logger, s.cfg)
-
-	lis, err := net.Listen("tcp", s.cfg.Server.Port)
-	if err != nil {
-		s.logger.Errorf("app - Run - net.Listen: %v", err)
-	}
-	s.Listener = lis
-
-	s.Server = grpc.NewServer(grpc.KeepaliveParams(keepalive.ServerParameters{
-		MaxConnectionIdle: s.cfg.Server.MaxConnectionIdle * time.Minute,
-		Timeout:           s.cfg.Server.Timeout * time.Second,
-		MaxConnectionAge:  s.cfg.Server.MaxConnectionAge * time.Minute,
-		Time:              s.cfg.Server.Time * time.Minute,
-	}),
-		grpc.UnaryInterceptor(im.Logger),
-		grpc.ChainUnaryInterceptor(
-			grpcctxtags.UnaryServerInterceptor(),
-			grpcrecovery.UnaryServerInterceptor(),
-		),
+func New(useCases *usecase.UseCases, lis net.Listener, logg *zap.Logger) *Server {
+	grpcServer := grpc.NewServer(
+		grpc.KeepaliveParams(keepalive.ServerParameters{
+			MaxConnectionIdle: _defaultMaxConnectionIdle,
+			Timeout:           _defaultTimeout,
+			MaxConnectionAge:  _defaultMaxConnectionAge,
+			Time:              _defaultTime,
+		}),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_zap.UnaryServerInterceptor(logg),
+			grpc_prometheus.UnaryServerInterceptor,
+		)),
 	)
+	reflection.Register(grpcServer)
 
-	if s.cfg.Server.Mode != "Production" {
-		reflection.Register(s.Server)
+	s := &Server{
+		Server: grpcServer,
+		notify: make(chan error, 1),
+		logg:   logg,
 	}
 
-	return nil
+	srv := grpcv1.NewAntibruteforceService(useCases, logg)
+	proto.RegisterAntiBruteforceServer(s.Server, srv)
+
+	// start monitoring
+	grpc_prometheus.Register(grpcServer)
+	grpc_prometheus.EnableHandlingTimeHistogram()
+	logg.Info(fmt.Sprintf("Monitoring export start listening %s", ":9091"))
+	httpserver := &http.Server{
+		Addr:         ":9091",
+		Handler:      promhttp.Handler(),
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+	go func() {
+		if err := httpserver.ListenAndServe(); err != nil {
+			logg.Error(err.Error())
+		}
+		http.Handle("/metrics", promhttp.Handler())
+	}()
+
+	// start server
+	s.Start(lis)
+
+	return s
+}
+
+func (s *Server) Start(lis net.Listener) {
+	go func() {
+		s.notify <- s.Server.Serve(lis)
+		close(s.notify)
+	}()
+}
+
+// Notify -.
+func (s *Server) Notify() <-chan error {
+	return s.notify
 }
 
 // Shutdown -.
-func (s *Server) Shutdown() error {
+func (s *Server) Shutdown() {
 	s.Server.GracefulStop()
-	s.logger.Info("grpc Server Exited Properly")
-	return s.Listener.Close()
+	s.logg.Info("gRPC server gracefully stopped")
 }

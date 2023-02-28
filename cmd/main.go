@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 
+	_ "github.com/lib/pq"
 	"github.com/tabularasa31/antibruteforce/config"
 	"github.com/tabularasa31/antibruteforce/internal/app"
 )
@@ -11,7 +12,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "./config/config", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "./config/config.yml", "Path to configuration file")
 }
 
 func main() {

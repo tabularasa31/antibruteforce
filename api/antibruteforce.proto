@@ -3,7 +3,6 @@ syntax = "proto3";
 package service;
 option go_package=".;proto";
 
-import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
 
 message Request {
@@ -14,15 +13,20 @@ message Request {
 
 message Response {
   google.protobuf.BoolValue ok = 1;
+  string message = 2;
 }
 
 message Subnet {
-  string ip = 1;
+  string subnet = 1;
+}
+
+message ListResponse {
+
 }
 
 service AntiBruteforce{
   rpc AllowRequest(Request) returns (Response);
-  rpc ClearBucket(Request) returns(google.protobuf.Empty);
+  rpc ClearBucket(Request) returns(Response);
   rpc AddToBlackList(Subnet) returns(Response);
   rpc AddToWhiteList(Subnet) returns(Response);
   rpc RemoveFromBlackList(Subnet) returns(Response);

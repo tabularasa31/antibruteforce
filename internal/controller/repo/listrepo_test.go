@@ -2,6 +2,9 @@ package repo_test
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	_ "github.com/lib/pq"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -11,8 +14,6 @@ import (
 	"github.com/tabularasa31/antibruteforce/internal/controller/repo"
 	"github.com/tabularasa31/antibruteforce/pkg/postgres"
 	"golang.org/x/net/context"
-	"os"
-	"testing"
 )
 
 var (
@@ -38,7 +39,6 @@ var (
 	password = "secret"
 	db       = "postgres"
 	port     = "5433"
-	dialect  = "postgres"
 	dsn      = "postgres://%s:%s@localhost:%s/%s?sslmode=disable"
 	maxConn  = 25
 )
@@ -73,7 +73,6 @@ func TestMain(m *testing.M) {
 	dsn = fmt.Sprintf(dsn, user, password, port, db)
 	if err = pool.Retry(
 		func() error {
-
 			pg, err = postgres.New(&config.Config{
 				Postgres: config.Postgres{Dsn: dsn, PoolMax: maxConn},
 			})
@@ -82,12 +81,8 @@ func TestMain(m *testing.M) {
 			}
 			return pg.Pool.Ping(context.Background())
 		}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err.Error())
+		log.Errorf("Could not connect to docker: %s", err.Error())
 	}
-
-	defer func() {
-		pg.Close()
-	}()
 
 	listrepo = repo.NewListRepo(pg)
 
@@ -104,7 +99,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	if err := pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
+		log.Errorf("Could not purge resource: %s", err)
 	}
 
 	os.Exit(code)
@@ -158,5 +153,4 @@ func TestListRepo_SaveToList(t *testing.T) {
 			assert.Equal(t, tc.expectedBoo, boo)
 		})
 	}
-
 }

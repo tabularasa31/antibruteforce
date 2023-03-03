@@ -21,7 +21,7 @@ func NewListRepo(pg *postgres.Postgres) *ListRepo {
 // SaveToList return (true, "", nil) if it is successfully added,
 // return false if something went wrong,
 // such as 1. internal error - return (false, empty string, error)
-// 2. overlap conflict - return (false, message about conflict, nil)
+// 2. overlap conflict - return (false, message about conflict, nil).
 func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (bool, string, error) {
 	if ok, message, err := lr.IterateSubnets(ctx, subnet, color); err != nil {
 		return false, "", fmt.Errorf("repo - SaveToList - lr.IterateSubnets: %w", err)
@@ -141,8 +141,8 @@ func (lr *ListRepo) IterateSubnets(ctx context.Context, subnetA, color string) (
 			// in case we try to add given subnet A in the same subnet B color list
 			return false, fmt.Sprintf("subnet %v already in %slist because it is included in subnet %v",
 				subnetA, color, row.subnetB), nil
-		} else if ipaddr.NewIPAddressString(subnetA).GetAddress(). // if given subnet A already include smaller subnet B in list
-										Contains(ipaddr.NewIPAddressString(row.subnetB).GetAddress()) {
+		} else if ipaddr.NewIPAddressString(subnetA). // if given subnet A already include smaller subnet B in list
+								GetAddress().Contains(ipaddr.NewIPAddressString(row.subnetB).GetAddress()) {
 			// in case we try to add given subnet A to the different list
 			if row.color != color {
 				return false,
@@ -163,8 +163,7 @@ func (lr *ListRepo) IterateSubnets(ctx context.Context, subnetA, color string) (
 func (lr *ListRepo) Up() error {
 	ctx := context.Background()
 
-	query :=
-		"CREATE TABLE IF NOT EXISTS lists (subnet CIDR PRIMARY KEY, list_type TEXT NOT NULL)"
+	query := "CREATE TABLE IF NOT EXISTS lists (subnet CIDR PRIMARY KEY, list_type TEXT NOT NULL)"
 	_, err := lr.Postgres.Pool.Exec(ctx, query)
 	if err != nil {
 		return err
@@ -172,7 +171,7 @@ func (lr *ListRepo) Up() error {
 	return nil
 }
 
-// Drop attaches the provider and drop the table
+// Drop attaches the provider and drop the table.
 func (lr *ListRepo) Drop() error {
 	ctx := context.Background()
 

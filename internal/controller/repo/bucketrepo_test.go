@@ -21,7 +21,7 @@ var (
 	}
 )
 
-func TestBucketRepo_Allow(t *testing.T) {
+func Test_CheckLimit(t *testing.T) {
 	tests := []struct {
 		sleep   time.Duration
 		name    string
@@ -56,7 +56,7 @@ func TestBucketRepo_Allow(t *testing.T) {
 	}
 }
 
-func TestBucketRepo_ClearBucket(t *testing.T) {
+func Test_ClearBucket(t *testing.T) {
 	s := miniredis.RunT(t)
 	c := redis.NewClient(&redis.Options{Addr: s.Addr()})
 

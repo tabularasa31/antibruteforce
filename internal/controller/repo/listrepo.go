@@ -18,9 +18,13 @@ func NewListRepo(pg *postgres.Postgres) *ListRepo {
 	return &ListRepo{pg}
 }
 
+// SaveToList return (true, "", nil) if it is successfully added,
+// return false if something went wrong,
+// such as 1. internal error - return (false, empty string, error)
+// 2. overlap conflict - return (false, message about conflict, nil)
 func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (bool, string, error) {
-	if ok, message, err := lr.iterateSubnets(ctx, subnet, color); err != nil {
-		return false, "", fmt.Errorf("repo - SaveToList - lr.iterateSubnets: %w", err)
+	if ok, message, err := lr.IterateSubnets(ctx, subnet, color); err != nil {
+		return false, "", fmt.Errorf("repo - SaveToList - lr.IterateSubnets: %w", err)
 	} else if !ok {
 		return ok, message, nil
 	}
@@ -90,9 +94,9 @@ func (lr *ListRepo) SearchIPInList(ctx context.Context, ip net.IP) string {
 	return found
 }
 
-// iterateSubnets checks if IP address ranges overlap.
+// IterateSubnets checks if IP address ranges overlap.
 // Returns false and message if there is an overlap conflict, true and empty string - if not.
-func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (bool, string, error) {
+func (lr *ListRepo) IterateSubnets(ctx context.Context, subnetA, color string) (bool, string, error) {
 	rows, err := lr.Postgres.Pool.Query(ctx, "SELECT subnet, list_type FROM lists")
 	if err != nil {
 		return false, "", fmt.Errorf("lr.Pool.Query: %w", err)
@@ -111,22 +115,41 @@ func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (
 
 		row.subnetB = fmt.Sprintf("%v", temp)
 
+		// if given subnet A already in list
+		if ipaddr.NewIPAddressString(row.subnetB).GetAddress().
+			Equal(ipaddr.NewIPAddressString(subnetA).GetAddress()) {
+			// in case we try to add given subnet A in the different color list
+			if row.color != color {
+				return false,
+					fmt.Sprintf("list conflict: can't add given subnet %v in %vlist because it is already in %vlist",
+						subnetA, color, row.color), nil
+			}
+			// in case we try to add given subnet A in the same color list
+			return false, fmt.Sprintf("given subnet %v already in %slist",
+				subnetA, color), nil
+		}
+
+		// if given subnet A already in list as a part of bigger subnet B
 		if ipaddr.NewIPAddressString(row.subnetB).GetAddress().
 			Contains(ipaddr.NewIPAddressString(subnetA).GetAddress()) {
+			// in case we try to add given subnet A to the different list
 			if row.color != color {
 				return false,
 					fmt.Sprintf("lists conflict: subnet %v in %slist already include given subnet %v",
 						row.subnetB, row.color, subnetA), nil
 			}
+			// in case we try to add given subnet A in the same subnet B color list
 			return false, fmt.Sprintf("subnet %v already in %slist because it is included in subnet %v",
 				subnetA, color, row.subnetB), nil
-		} else if ipaddr.NewIPAddressString(subnetA).GetAddress().
-			Contains(ipaddr.NewIPAddressString(row.subnetB).GetAddress()) {
+		} else if ipaddr.NewIPAddressString(subnetA).GetAddress(). // if given subnet A already include smaller subnet B in list
+										Contains(ipaddr.NewIPAddressString(row.subnetB).GetAddress()) {
+			// in case we try to add given subnet A to the different list
 			if row.color != color {
 				return false,
 					fmt.Sprintf("lists conflict: given subnet %v already include subnet %v in different %slist",
 						subnetA, row.subnetB, row.color), nil
 			}
+			// in case we try to add given subnet A in the same subnet B color list
 			_, er := lr.Postgres.Pool.Exec(ctx, `delete from lists where subnet = $1`, row.subnetB)
 			if er != nil {
 				return false, "", fmt.Errorf("AcontainingB - lr.Pool.Exec - delete: %w", er)
@@ -135,4 +158,29 @@ func (lr *ListRepo) iterateSubnets(ctx context.Context, subnetA, color string) (
 		}
 	}
 	return true, "", nil
+}
+
+func (lr *ListRepo) Up() error {
+	ctx := context.Background()
+
+	query :=
+		"CREATE TABLE IF NOT EXISTS lists (subnet CIDR PRIMARY KEY, list_type TEXT NOT NULL)"
+	_, err := lr.Postgres.Pool.Exec(ctx, query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Drop attaches the provider and drop the table
+func (lr *ListRepo) Drop() error {
+	ctx := context.Background()
+
+	query := "DROP TABLE IF EXISTS lists"
+	_, err := lr.Postgres.Pool.Exec(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

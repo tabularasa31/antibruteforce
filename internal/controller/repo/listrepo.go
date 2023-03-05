@@ -46,22 +46,22 @@ func (lr *ListRepo) SaveToList(ctx context.Context, subnet, color string) (bool,
 }
 
 // DeleteFromList subnet from lists -.
-func (lr *ListRepo) DeleteFromList(ctx context.Context, subnet, color string) error {
+func (lr *ListRepo) DeleteFromList(ctx context.Context, subnet, color string) (string, error) {
 	row := lr.Postgres.Pool.QueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM lists WHERE subnet = $1 AND list_type = $2)`, subnet, color)
-	var found string
+	var found bool
 	if err := row.Scan(&found); err != nil {
-		return err
+		return "", err
 	}
-	if found == "" {
-		return fmt.Errorf("there is no subnet %s in %slist", subnet, color)
+	if !found {
+		return fmt.Sprintf("there is no subnet %s in %slist", subnet, color), nil
 	}
 
 	_, err := lr.Postgres.Pool.Exec(ctx, `delete from lists where subnet = $1`, subnet)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return "", nil
 }
 
 // CheckColor checks if a subnet exists in the specified list.

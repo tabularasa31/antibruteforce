@@ -42,7 +42,7 @@ func Run(cfg *config.Config) {
 
 	newRedis := redis.NewClient(opt)
 	if er := newRedis.Ping(); er.String() != "ping: PONG" {
-		logg.Error(fmt.Sprintf("client Redis ping connection error: %v", err))
+		logg.Error(fmt.Sprintf("cli Redis ping connection error: %v", err))
 		signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	} else {
 		logg.Info("...redis successfully connected")

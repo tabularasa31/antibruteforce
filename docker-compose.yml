@@ -9,6 +9,7 @@ services:
       - '50051:50051'
       - '9091:9091'  #for prometheus
     environment:
+      GRPC_HOST: ":50051"
       APP_REDIS_HOST: "redis"
       APP_REDIS_PORT: "6379"
       APP_REDIS_PASSWORD: ""
@@ -33,13 +34,10 @@ services:
       - default
 
   migrate:
-#    container_name: migrate
+    container_name: migrate
     build:
       context: .
       dockerfile: build/migrations/Dockerfile
-#    environment:
-#      GOOSE_DRIVER: 'postgres'
-#      GOOSE_DBSTRING: "postgres://postgres:passpass@postgres:5432/postgres?sslmode=disable"
     depends_on:
       - postgres
     restart: on-failure

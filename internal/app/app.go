@@ -18,6 +18,10 @@ import (
 )
 
 func Run(cfg *config.Config) {
+	// Waiting signal
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
 	// Logger
 	logg, err := logger.GetLogger(cfg)
 	if err != nil {
@@ -29,6 +33,7 @@ func Run(cfg *config.Config) {
 
 	logg.Info("...config successfully parsed")
 
+	logg.Info("starting redis...")
 	// Redis
 	opt := &redis.Options{
 		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
@@ -38,6 +43,7 @@ func Run(cfg *config.Config) {
 	newRedis := redis.NewClient(opt)
 	if er := newRedis.Ping(); er.String() != "ping: PONG" {
 		logg.Error(fmt.Sprintf("client Redis ping connection error: %v", err))
+		signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	} else {
 		logg.Info("...redis successfully connected")
 	}
@@ -49,6 +55,7 @@ func Run(cfg *config.Config) {
 	db, err := postgres.New(cfg)
 	if err != nil {
 		logg.Error(fmt.Sprintf("app - Run - postgres.New: %v", err))
+		signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	} else {
 		logg.Info("...postgres successfully connected")
 	}
@@ -56,6 +63,9 @@ func Run(cfg *config.Config) {
 
 	// White and black lists
 	listRepo := repo.NewListRepo(db)
+	if er := listRepo.Up(); er != nil {
+		logg.Error(fmt.Sprintf("app - Run - listRepo.Up: %v", err))
+	}
 
 	// Use cases
 	useCases := usecase.New(bucketRepo, listRepo)
@@ -69,10 +79,6 @@ func Run(cfg *config.Config) {
 	}
 
 	grpcServer := grpcserver.New(useCases, lis, logg)
-
-	// Waiting signal
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
 	s := <-interrupt
 	logg.Info("app - Run - signal: " + s.String())

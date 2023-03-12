@@ -95,7 +95,7 @@ func (s *AbfSuite) Test_AllowRequest() {
 	}
 
 	tc := testCase{
-		description: "wrong IP",
+		description: "invalid IP",
 		request: &proto.Request{
 			Login: "test",
 			Pass:  "secret",
@@ -135,25 +135,55 @@ type testSubnet struct {
 }
 
 func (s *AbfSuite) Test_WhiteList() {
-	testCases := []testSubnet{
-		{
-			description: "success add to whitelist",
-			request: &proto.Subnet{
-				Subnet: "100.0.0.0/24",
-			},
-			expectedOk:   true,
-			expectedMess: "",
-			expectedErr:  nil,
+	ts := testSubnet{
+		description: "success add to whitelist",
+		request: &proto.Subnet{
+			Subnet: "100.0.0.0/25",
 		},
+		expectedOk:   true,
+		expectedMess: "",
 	}
 
-	for _, tc := range testCases {
-		fmt.Printf("\n Test Case: %s \n", tc.description)
-		resp, err := s.client.AddToWhiteList(s.ctx, tc.request)
-		s.Require().Equal(tc.expectedOk, resp.GetOk().Value)
-		s.Require().Equal(tc.expectedMess, resp.GetMessage())
-		s.Require().Equal(tc.expectedErr, err)
+	resp, err := s.client.RemoveFromWhiteList(s.ctx, ts.request)
+	s.Require().NoError(err)
+
+	fmt.Printf("\n Test Case: %s \n", ts.description)
+	resp, err = s.client.AddToWhiteList(s.ctx, ts.request)
+	s.Require().NoError(err)
+	s.Require().Equal(ts.expectedOk, resp.GetOk().Value)
+	s.Require().Equal(ts.expectedMess, resp.GetMessage())
+
+	fmt.Printf("\n Test Case: %s \n", ts.description)
+	resp, err = s.client.RemoveFromWhiteList(s.ctx, ts.request)
+	s.Require().NoError(err)
+	s.Require().Equal(ts.expectedOk, resp.GetOk().Value)
+	s.Require().Equal(ts.expectedMess, resp.GetMessage())
+}
+
+func (s *AbfSuite) Test_BlackList() {
+	ts := testSubnet{
+		description: "success add to whitelist",
+		request: &proto.Subnet{
+			Subnet: "100.0.1.0/25",
+		},
+		expectedOk:   true,
+		expectedMess: "",
 	}
+
+	resp, err := s.client.RemoveFromBlackList(s.ctx, ts.request)
+	s.Require().NoError(err)
+
+	fmt.Printf("\n Test Case: %s \n", ts.description)
+	resp, err = s.client.AddToBlackList(s.ctx, ts.request)
+	s.Require().NoError(err)
+	s.Require().Equal(ts.expectedOk, resp.GetOk().Value)
+	s.Require().Equal(ts.expectedMess, resp.GetMessage())
+
+	fmt.Printf("\n Test Case: %s \n", ts.description)
+	resp, err = s.client.RemoveFromBlackList(s.ctx, ts.request)
+	s.Require().NoError(err)
+	s.Require().Equal(ts.expectedOk, resp.GetOk().Value)
+	s.Require().Equal(ts.expectedMess, resp.GetMessage())
 }
 
 func TestAbfSuite(t *testing.T) {

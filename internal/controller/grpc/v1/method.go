@@ -19,7 +19,6 @@ import (
 const (
 	whitelist = "white"
 	blacklist = "black"
-	ok        = "OK"
 )
 
 type AntibruteforceService struct {
@@ -143,7 +142,7 @@ func (a *AntibruteforceService) RemoveFromBlackList(ctx context.Context, in *pro
 
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: ok,
+		Message: "",
 	}, nil
 }
 
@@ -160,7 +159,7 @@ func (a *AntibruteforceService) RemoveFromWhiteList(ctx context.Context, in *pro
 		return &proto.Response{}, status.Error(codes.InvalidArgument, "subnet should not be empty")
 	}
 
-	mess, err := a.useCases.Remove(ctx, subnet, blacklist)
+	mess, err := a.useCases.Remove(ctx, subnet, whitelist)
 	if err != nil {
 		a.logg.Error(err.Error())
 		return &proto.Response{},
@@ -175,7 +174,7 @@ func (a *AntibruteforceService) RemoveFromWhiteList(ctx context.Context, in *pro
 
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: ok,
+		Message: "",
 	}, nil
 }
 

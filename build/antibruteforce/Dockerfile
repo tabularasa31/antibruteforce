@@ -1,25 +1,29 @@
-# Step 1: Modules caching
-FROM golang:latest as modules
-COPY go.mod go.sum /modules/
-WORKDIR /modules
+# Step 1: Build env
+FROM golang:latest as builder
+ENV NAME "antibruteforce"
+
+WORKDIR /app
+ENV CGO_ENABLED=0
+COPY go.mod .
+COPY go.sum .
+
 RUN go mod download
 
-# Step 2: Builder
-FROM modules as builder
-COPY --from=modules /go/pkg /go/pkg
-COPY .. /app
+COPY . .
+
+RUN go build -o bin/${NAME} ./cmd/${NAME}
+RUN go build -o bin/abf ./cmd/cli
+
+
+# Step 2: Final
+FROM alpine
+ENV NAME "antibruteforce"
+
+COPY --from=builder /app/config.yml /app/config.yml
+COPY --from=builder /app/bin/${NAME} /app/
+COPY --from=builder /app/bin/abf /app/
+
 WORKDIR /app
 
-RUN CGO_ENABLED=0 go build \
-        -o /bin/app ./cmd/main.go
-
-# Step 3: Final
-FROM scratch
-
-LABEL service="Antibruteforce"
-LABEL mainteiner="tabularasa31@gmail.com"
-
-COPY --from=builder /app/config /config
-COPY --from=builder /bin/app /app
-
-CMD ["/app"]
+EXPOSE 50051
+CMD ./${NAME}

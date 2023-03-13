@@ -2,41 +2,60 @@ version: '3.9'
 
 services:
   antibruteforce:
-    container_name: antibruteforce-service
     build:
       context: .
       dockerfile: build/antibruteforce/Dockerfile
     ports:
       - '50051:50051'
       - '9091:9091'  #for prometheus
+    environment:
+      GRPC_HOST: ":50051"
+      APP_REDIS_HOST: "redis"
+      APP_REDIS_PORT: "6379"
+      APP_REDIS_PASSWORD: ""
+    depends_on:
+      - redis
+      - postgres
     networks:
       - default
-      - monitoring
+    restart: unless-stopped
 
   postgres:
-    image: 'postgres'
+    image: postgres
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
-      POSTGRES_USER: 'postgres'
-      POSTGRES_PASSWORD: 'passpass'
-      POSTGRES_DB: 'abfdb'
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "passpass"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
+    networks:
+      - default
+
+  migrate:
+    container_name: migrate
+    build:
+      context: .
+      dockerfile: build/migrations/Dockerfile
+    depends_on:
+      - postgres
+    restart: on-failure
     networks:
       - default
 
   redis:
     image: 'redis:alpine'
-    command: redis-server --requirepass {$APP_REDIS_PASSWORD}
+    command: redis-server
     ports:
       - '6379:6379'
     volumes:
       - $PWD/redis-data:/var/lib/redis
       - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
-      - REDIS_REPLICATION_MODE=master
+      REDIS_REPLICATION_MODE: master
+      ALLOW_EMPTY_PASSWORD: yes
+    restart: unless-stopped
     networks:
       - default
 
@@ -48,10 +67,20 @@ services:
     ports:
       - '9090:9090'
     networks:
-      - monitoring
+      - default
+
+  integration_tests:
+    build:
+      context: .
+      dockerfile: build/tests/Dockerfile
+    command: "go test -tags integration ./tests/integration/..."
+    environment:
+      GRPC_HOST: "antibruteforce:50051"
+    depends_on:
+      - antibruteforce
+    networks:
+      - default
 
 networks:
   default:
-    driver: bridge
-  monitoring:
     driver: bridge

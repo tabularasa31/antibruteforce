@@ -29,9 +29,8 @@ type req struct {
 type testCase struct {
 	description  string
 	input        req
-	expectedBoo  bool
+	expectedOk   bool
 	expectedMess string
-	expectedErr  error
 }
 
 var (
@@ -113,9 +112,8 @@ func TestListRepo_SaveToList(t *testing.T) {
 				subnet: "168.0.1.0/24",
 				color:  "white",
 			},
-			expectedBoo:  true,
+			expectedOk:   true,
 			expectedMess: "",
-			expectedErr:  nil,
 		},
 		{
 			description: "empty subnet",
@@ -123,7 +121,7 @@ func TestListRepo_SaveToList(t *testing.T) {
 				subnet: "",
 				color:  "white",
 			},
-			expectedBoo:  false,
+			expectedOk:   false,
 			expectedMess: "",
 		},
 		{
@@ -132,7 +130,7 @@ func TestListRepo_SaveToList(t *testing.T) {
 				subnet: "168.0.1.0/24",
 				color:  "white",
 			},
-			expectedBoo:  false,
+			expectedOk:   false,
 			expectedMess: "given subnet 168.0.1.0/24 already in whitelist",
 		},
 		{
@@ -141,16 +139,48 @@ func TestListRepo_SaveToList(t *testing.T) {
 				subnet: "168.0.1.0/24",
 				color:  "black",
 			},
-			expectedBoo:  false,
+			expectedOk:   false,
 			expectedMess: "list conflict: can't add given subnet 168.0.1.0/24 in blacklist because it is already in whitelist",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			boo, mess, _ := listrepo.SaveToList(context.Background(), tc.input.subnet, tc.input.color)
+			ok, mess, _ := listrepo.SaveToList(context.Background(), tc.input.subnet, tc.input.color)
 			assert.Equal(t, tc.expectedMess, mess)
-			assert.Equal(t, tc.expectedBoo, boo)
+			assert.Equal(t, tc.expectedOk, ok)
+		})
+	}
+}
+
+func TestListRepo_DeleteFromList(t *testing.T) {
+	_, err := listrepo.Pool.Exec(context.Background(),
+		"INSERT INTO lists(subnet, list_type) VALUES ('168.0.0.0/24', 'white')")
+	assert.NoError(t, err)
+
+	testCases := []testCase{
+		{
+			description: "success test",
+			input: req{
+				subnet: "168.0.0.0/24",
+				color:  "white",
+			},
+			expectedMess: "",
+		}, {
+			description: "not existed subnet",
+			input: req{
+				subnet: "192.168.1.0/24",
+				color:  "black",
+			},
+			expectedMess: "there is no subnet 192.168.1.0/24 in blacklist",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			mess, err := listrepo.DeleteFromList(context.Background(), tc.input.subnet, tc.input.color)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expectedMess, mess)
 		})
 	}
 }

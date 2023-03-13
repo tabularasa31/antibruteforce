@@ -4,6 +4,8 @@ package integration_test
 
 import (
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"os"
 	"testing"
 
@@ -11,9 +13,7 @@ import (
 	proto "github.com/tabularasa31/antibruteforce/api"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 )
 
 type AbfSuite struct {

@@ -14,7 +14,7 @@ build:
 test:
 	go test -cover ./...
 
-integration-test:
+itest:
 	go test -tags integration ./tests/integration/...
 
 generate:
@@ -39,4 +39,4 @@ down:
 	docker-compose -f docker-compose.yml down
 
 # ==============================================================================
-.PHONY: build run test lint up
+.PHONY: build run test lint up down

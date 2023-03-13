@@ -69,6 +69,18 @@ services:
     networks:
       - default
 
+  integration_tests:
+    build:
+      context: .
+      dockerfile: build/tests/Dockerfile
+    command: "go test -tags integration ./tests/integration/..."
+    environment:
+      GRPC_HOST: "antibruteforce:50051"
+    depends_on:
+      - antibruteforce
+    networks:
+      - default
+
 networks:
   default:
     driver: bridge

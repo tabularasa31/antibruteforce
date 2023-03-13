@@ -26,32 +26,36 @@ White and blacklists included`,
 var (
 	client proto.AntiBruteforceClient
 	ctx    context.Context
+	cancel context.CancelFunc
 )
 
 func Execute() {
+	if err := execNoExit(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := rootCmd.Execute(); err != nil {
+		cancel()
+		log.Fatal(err)
+	}
+}
+
+func execNoExit() error {
 	grpcHost := os.Getenv("GRPC_HOST")
 	if grpcHost == "" {
 		grpcHost = "localhost:50051"
 	}
 	conn, err := grpc.Dial(grpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("Error while starting dial connection: %v", err)
+		return fmt.Errorf("error while starting dial connection: %w", err)
 	}
 
 	client = proto.NewAntiBruteforceClient(conn)
 
-	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
-	err = rootCmd.Execute()
-	if err != nil {
-		cancel()
-		os.Exit(1)
-	}
-}
-
-func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	return nil
 }
 
 func Request(ctx context.Context, a proto.AntiBruteforceClient, login, pass, ip string) (ok, mess string, err error) {

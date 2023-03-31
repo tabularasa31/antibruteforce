@@ -19,7 +19,6 @@ import (
 const (
 	whitelist = "white"
 	blacklist = "black"
-	ok        = "OK"
 )
 
 type AntibruteforceService struct {
@@ -37,6 +36,20 @@ func (a *AntibruteforceService) AllowRequest(ctx context.Context, in *proto.Requ
 	defer cancel()
 
 	request := models.Request{Login: in.GetLogin(), Pass: in.GetPass(), IP: in.GetIp()}
+
+	if request.Login == "" || request.Pass == "" || request.IP == "" {
+		return &proto.Response{
+			Ok:      &wrapperspb.BoolValue{Value: false},
+			Message: "login/password/IP should not be empty",
+		}, nil
+	}
+
+	if res := net.ParseIP(request.IP); res == nil {
+		return &proto.Response{
+				Ok: &wrappers.BoolValue{Value: false},
+			},
+			status.Error(codes.InvalidArgument, "invalid IP")
+	}
 
 	res := a.useCases.AllowRequest(ctx, request)
 
@@ -62,18 +75,14 @@ func (a *AntibruteforceService) AddToBlackList(ctx context.Context, in *proto.Su
 
 	subnet, er := a.getSubnet(in.GetSubnet())
 	if er != nil {
-		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false},
-			},
+		return &proto.Response{},
 			status.Error(codes.InvalidArgument, er.Error())
 	}
 
 	ok, message, err := a.useCases.Add(ctx, subnet, blacklist)
 	if err != nil {
 		a.logg.Error(err.Error())
-		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false},
-			},
+		return &proto.Response{},
 			status.Error(codes.Internal, "Internal problems")
 	}
 	return &proto.Response{
@@ -88,18 +97,14 @@ func (a *AntibruteforceService) AddToWhiteList(ctx context.Context, in *proto.Su
 
 	subnet, er := a.getSubnet(in.GetSubnet())
 	if er != nil {
-		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false},
-			},
+		return &proto.Response{},
 			status.Error(codes.InvalidArgument, er.Error())
 	}
 
 	ok, message, err := a.useCases.Add(ctx, subnet, whitelist)
 	if err != nil {
 		a.logg.Error(err.Error())
-		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false},
-			},
+		return &proto.Response{},
 			status.Error(codes.Internal, "Internal problems")
 	}
 	return &proto.Response{
@@ -114,18 +119,30 @@ func (a *AntibruteforceService) RemoveFromBlackList(ctx context.Context, in *pro
 
 	subnet, er := a.getSubnet(in.GetSubnet())
 	if er != nil {
-		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false},
-			},
-			status.Error(codes.InvalidArgument, er.Error())
+		return &proto.Response{},
+			status.Error(codes.InvalidArgument, "invalid subnet")
 	}
 
-	if err := a.useCases.Remove(ctx, subnet, blacklist); err != nil {
-		return nil, err
+	if subnet == "" {
+		return &proto.Response{}, status.Error(codes.InvalidArgument, "subnet should not be empty")
 	}
+
+	mess, err := a.useCases.Remove(ctx, subnet, blacklist)
+	if err != nil {
+		a.logg.Error(err.Error())
+		return &proto.Response{},
+			status.Error(codes.Internal, "Internal problems")
+	}
+	if mess != "" {
+		return &proto.Response{
+			Ok:      &wrappers.BoolValue{Value: false},
+			Message: mess,
+		}, nil
+	}
+
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: ok,
+		Message: "",
 	}, nil
 }
 
@@ -135,19 +152,29 @@ func (a *AntibruteforceService) RemoveFromWhiteList(ctx context.Context, in *pro
 
 	subnet, er := a.getSubnet(in.GetSubnet())
 	if er != nil {
-		return &proto.Response{
-				Ok: &wrappers.BoolValue{Value: false},
-			},
-			status.Error(codes.InvalidArgument, er.Error())
+		return &proto.Response{}, status.Error(codes.InvalidArgument, "invalid subnet")
 	}
 
-	if err := a.useCases.Remove(ctx, subnet, whitelist); err != nil {
-		return nil, err
+	if subnet == "" {
+		return &proto.Response{}, status.Error(codes.InvalidArgument, "subnet should not be empty")
+	}
+
+	mess, err := a.useCases.Remove(ctx, subnet, whitelist)
+	if err != nil {
+		a.logg.Error(err.Error())
+		return &proto.Response{},
+			status.Error(codes.Internal, "Internal problems")
+	}
+	if mess != "" {
+		return &proto.Response{
+			Ok:      &wrappers.BoolValue{Value: false},
+			Message: mess,
+		}, nil
 	}
 
 	return &proto.Response{
 		Ok:      &wrappers.BoolValue{Value: true},
-		Message: ok,
+		Message: "",
 	}, nil
 }
 

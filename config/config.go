@@ -29,7 +29,6 @@ type (
 		Mode              string        `yaml:"mode"`
 		ReadTimeout       time.Duration `yaml:"readTimeout"`
 		WriteTimeout      time.Duration `yaml:"writeTimeout"`
-		SSL               bool          `yaml:"ssl"`
 		CtxDefaultTimeout time.Duration `yaml:"ctxDefaultTimeout"`
 		Debug             bool          `yaml:"debug"`
 	}
@@ -56,9 +55,6 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 	v := viper.New()
 
 	v.SetConfigFile(filename)
-	v.AddConfigPath(".")
-	v.SetEnvPrefix("app")
-	v.AutomaticEnv()
 	if err := v.ReadInConfig(); err != nil {
 		var notFoundError *viper.ConfigFileNotFoundError
 		if errors.As(err, &notFoundError) {
@@ -67,20 +63,22 @@ func LoadConfig(filename string) (*viper.Viper, error) {
 		return nil, err
 	}
 
+	fmt.Printf("CONFIG LOADED  %v", v)
+
 	return v, nil
 }
 
 // ParseConfig Parse config file -.
 func ParseConfig(v *viper.Viper) (*Config, error) {
-	c := &Config{Redis: Redis{"", "", ""}}
-
+	c := &Config{}
+	v.AutomaticEnv()
 	if err := v.Unmarshal(&c); err != nil {
 		return nil, fmt.Errorf("unable to decode into struct, %w", err)
 	}
 
 	c.Redis.Host = v.GetString(envConfigRedisHost)
 	if c.Redis.Host == "" {
-		v.SetDefault(envConfigRedisHost, "localhost")
+		v.SetDefault(envConfigRedisHost, "0.0.0.0")
 		c.Redis.Host = v.GetString(envConfigRedisHost)
 	}
 	c.Redis.Port = v.GetString(envConfigRedisPort)
@@ -93,8 +91,8 @@ func ParseConfig(v *viper.Viper) (*Config, error) {
 }
 
 // GetConfig Get config -.
-func GetConfig(configPath string) (*Config, error) {
-	cfgFile, err := LoadConfig(configPath)
+func GetConfig(file string) (*Config, error) {
+	cfgFile, err := LoadConfig(file)
 	if err != nil {
 		return nil, err
 	}

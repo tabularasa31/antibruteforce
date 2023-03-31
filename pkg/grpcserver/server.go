@@ -15,6 +15,7 @@ import (
 	"github.com/tabularasa31/antibruteforce/internal/usecase"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 )
@@ -35,6 +36,7 @@ type Server struct {
 
 func New(useCases *usecase.UseCases, lis net.Listener, logg *zap.Logger) *Server {
 	grpcServer := grpc.NewServer(
+		grpc.Creds(insecure.NewCredentials()),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: _defaultMaxConnectionIdle,
 			Timeout:           _defaultTimeout,
@@ -96,4 +98,5 @@ func (s *Server) Notify() <-chan error {
 func (s *Server) Shutdown() {
 	s.Server.GracefulStop()
 	s.logg.Info("gRPC server gracefully stopped")
+	s.logg.Info("Goodbye, World!")
 }

@@ -12,10 +12,8 @@ app:
 server:
   port: :50051
   mode: development
-  jwtSecretKey: secretkey
   readTimeout: 5
   writeTimeout: 5
-  ssl: true
   ctxDefaultTimeout: 12
   debug: false
 
@@ -24,10 +22,6 @@ logger:
   level: info
 
 postgres:
-  dsn: 'postgres://postgres:passpass@localhost:5432/abfdb'
+  dsn: 'postgres://postgres:passpass@postgres:5432/postgres?sslmode=disable'
   pool_max: 2
 
-
-#  dsn: 'postgres://abf:passpass@localhost:5432/abfdb'
-#
-#'pgsql:host=localhost;port=5432;dbname=testdb;user=bruce;password=mypass'

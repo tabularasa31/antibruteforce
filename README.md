@@ -48,7 +48,7 @@ To deploy the microservice:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/tabularasa31/antibruteforce.git
+   git clone github.com/tabularasa31/antibruteforce.git
    cd antibruteforce
    ```
 
